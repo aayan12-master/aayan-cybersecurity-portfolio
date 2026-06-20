@@ -25,8 +25,8 @@ import fs from 'fs';
     await page.waitForTimeout(1000);
 
     console.log('Logging in...');
-    await page.fill('input[type="text"]', 'aayan');
-    await page.fill('input[type="password"]', 'AayanAdmin@2026');
+    await page.fill('input[type="text"]', process.env.TEST_ADMIN_EMAIL || 'aayansayyad168@gmail.com');
+    await page.fill('input[type="password"]', process.env.TEST_ADMIN_PASSWORD || '');
     await page.click('button[type="submit"]');
     await page.waitForTimeout(2000);
 

@@ -35,7 +35,7 @@ const Login = () => {
     setError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 700));
-    const result = login(username, password);
+    const result = await login(username, password);
     setLoading(false);
     if (result.success) {
       navigate('/admin/dashboard');
@@ -62,12 +62,12 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
-              <label>Username</label>
+              <label>Email or Username</label>
               <div className="input-wrapper">
                 <User size={18} className="input-icon" aria-hidden="true" />
                 <input
                   type="text"
-                  placeholder="Enter username"
+                  placeholder="Enter email or username"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   required

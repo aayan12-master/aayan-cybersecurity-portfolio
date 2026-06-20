@@ -1,26 +1,57 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { DataProvider } from './contexts/DataContext';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
-import Login from './admin/Login';
-import AdminLayout from './admin/AdminLayout';
 import ProtectedRoute from './admin/ProtectedRoute';
-import Dashboard from './admin/Dashboard';
-import HeroEditor from './admin/editors/HeroEditor';
-import AboutEditor from './admin/editors/AboutEditor';
-import EducationEditor from './admin/editors/EducationEditor';
-import TrainingEditor from './admin/editors/TrainingEditor';
-import SkillsManager from './admin/editors/SkillsManager';
-import ServicesManager from './admin/editors/ServicesManager';
-import ProjectsManager from './admin/editors/ProjectsManager';
-import CertificationsManager from './admin/editors/CertificationsManager';
-import RoadmapManager from './admin/editors/RoadmapManager';
-import FutureProjectsManager from './admin/editors/FutureProjectsManager';
-import ContactMessages from './admin/editors/ContactMessages';
-import SocialLinksEditor from './admin/editors/SocialLinksEditor';
-import SiteSettingsEditor from './admin/editors/SiteSettingsEditor';
-import SectionVisibilityEditor from './admin/editors/SectionVisibilityEditor';
+
+// Lazy-loaded Admin Components
+const Login = lazy(() => import('./admin/Login'));
+const AdminLayout = lazy(() => import('./admin/AdminLayout'));
+const Dashboard = lazy(() => import('./admin/Dashboard'));
+const HeroEditor = lazy(() => import('./admin/editors/HeroEditor'));
+const AboutEditor = lazy(() => import('./admin/editors/AboutEditor'));
+const EducationEditor = lazy(() => import('./admin/editors/EducationEditor'));
+const TrainingEditor = lazy(() => import('./admin/editors/TrainingEditor'));
+const SkillsManager = lazy(() => import('./admin/editors/SkillsManager'));
+const ServicesManager = lazy(() => import('./admin/editors/ServicesManager'));
+const ProjectsManager = lazy(() => import('./admin/editors/ProjectsManager'));
+const CertificationsManager = lazy(() => import('./admin/editors/CertificationsManager'));
+const RoadmapManager = lazy(() => import('./admin/editors/RoadmapManager'));
+const FutureProjectsManager = lazy(() => import('./admin/editors/FutureProjectsManager'));
+const ContactMessages = lazy(() => import('./admin/editors/ContactMessages'));
+const SocialLinksEditor = lazy(() => import('./admin/editors/SocialLinksEditor'));
+const SiteSettingsEditor = lazy(() => import('./admin/editors/SiteSettingsEditor'));
+const SectionVisibilityEditor = lazy(() => import('./admin/editors/SectionVisibilityEditor'));
+
+const AdminFallback = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    background: '#0b0b10',
+    color: '#9090b0',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '0.9rem'
+  }}>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{
+        display: 'inline-block',
+        width: '24px',
+        height: '24px',
+        border: '2.5px solid rgba(255, 255, 255, 0.15)',
+        borderTopColor: '#7c6ff7',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+        marginBottom: '0.75rem'
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div>Loading Admin Panel...</div>
+    </div>
+  </div>
+);
 
 function App() {
   return (
@@ -40,7 +71,14 @@ function App() {
             />
 
             {/* ── Admin Login (public) ── */}
-            <Route path="/admin/login" element={<Login />} />
+            <Route
+              path="/admin/login"
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <Login />
+                </Suspense>
+              }
+            />
 
             {/* ── Redirect /admin → /admin/login ── */}
             <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
@@ -50,7 +88,9 @@ function App() {
               path="/admin/*"
               element={
                 <ProtectedRoute>
-                  <AdminLayout />
+                  <Suspense fallback={<AdminFallback />}>
+                    <AdminLayout />
+                  </Suspense>
                 </ProtectedRoute>
               }
             >

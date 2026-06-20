@@ -26,6 +26,32 @@ const Home = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Dynamically update SEO metadata from Supabase
+  useEffect(() => {
+    const settings = data.siteSettings;
+    if (settings.seoTitle) {
+      document.title = settings.seoTitle;
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute('content', settings.seoTitle);
+      const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+      if (twitterTitle) twitterTitle.setAttribute('content', settings.seoTitle);
+    }
+    if (settings.metaDescription) {
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute('content', settings.metaDescription);
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute('content', settings.metaDescription);
+      const twitterDesc = document.querySelector('meta[name="twitter:description"]');
+      if (twitterDesc) twitterDesc.setAttribute('content', settings.metaDescription);
+    }
+    if (settings.ogImage) {
+      const ogImg = document.querySelector('meta[property="og:image"]');
+      if (ogImg) ogImg.setAttribute('content', settings.ogImage);
+      const twitterImg = document.querySelector('meta[name="twitter:image"]');
+      if (twitterImg) twitterImg.setAttribute('content', settings.ogImage);
+    }
+  }, [data.siteSettings]);
+
   return (
     <div className="home-page">
       <motion.div
