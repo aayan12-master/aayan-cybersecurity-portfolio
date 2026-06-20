@@ -409,17 +409,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     return DEFAULT_DATA;
   });
 
-  // Keep localStorage as a synchronous offline backup
+  // Keep localStorage as a backup
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data]);
 
-  // Seeding routine
-  const seedDatabase = async () => {
-    console.log('Supabase database is empty. Seeding with default data...');
+  // Seeding routine for individual lists and missing configs
+  const seedDatabase = async (configsRes: any, skillsRes: any, servicesRes: any, projectsRes: any, certsRes: any, roadmapRes: any, futureRes: any, socialRes: any) => {
+    console.log('[Supabase Seed] Checking for empty configurations or lists to seed...');
     try {
-      // 1. Seed configs
-      const configs = [
+      // 1. Seed missing configurations
+      const existingKeys = (configsRes.data || []).map((r: any) => r.key);
+      const requiredConfigs = [
         { key: 'hero', value: DEFAULT_DATA.hero },
         { key: 'about', value: DEFAULT_DATA.about },
         { key: 'education', value: DEFAULT_DATA.education },
@@ -427,35 +428,52 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         { key: 'siteSettings', value: DEFAULT_DATA.siteSettings },
         { key: 'sectionVisibility', value: DEFAULT_DATA.sectionVisibility }
       ];
-      await supabase.from('portfolio_configs').upsert(configs);
+      const missingConfigs = requiredConfigs.filter(rc => !existingKeys.includes(rc.key));
+      if (missingConfigs.length > 0) {
+        console.log('[Supabase Seed] Seeding missing configs:', missingConfigs.map(c => c.key));
+        const res = await supabase.from('portfolio_configs').upsert(missingConfigs);
+        console.log('[Supabase Seed Response] portfolio_configs:', { status: res.status, error: res.error });
+      }
 
-      // 2. Seed lists
-      if (DEFAULT_DATA.skills.length > 0) {
-        await supabase.from('skills').upsert(DEFAULT_DATA.skills);
+      // 2. Seed missing lists
+      if ((!skillsRes.data || skillsRes.data.length === 0) && DEFAULT_DATA.skills.length > 0) {
+        console.log('[Supabase Seed] Seeding skills list...');
+        const res = await supabase.from('skills').upsert(DEFAULT_DATA.skills);
+        console.log('[Supabase Seed Response] skills:', { status: res.status, error: res.error });
       }
-      if (DEFAULT_DATA.services.length > 0) {
-        const dbServices = DEFAULT_DATA.services.map(mapServiceToDB);
-        await supabase.from('services').upsert(dbServices);
+      if ((!servicesRes.data || servicesRes.data.length === 0) && DEFAULT_DATA.services.length > 0) {
+        console.log('[Supabase Seed] Seeding services list...');
+        const res = await supabase.from('services').upsert(DEFAULT_DATA.services.map(mapServiceToDB));
+        console.log('[Supabase Seed Response] services:', { status: res.status, error: res.error });
       }
-      if (DEFAULT_DATA.projects.length > 0) {
-        await supabase.from('projects').upsert(DEFAULT_DATA.projects);
+      if ((!projectsRes.data || projectsRes.data.length === 0) && DEFAULT_DATA.projects.length > 0) {
+        console.log('[Supabase Seed] Seeding projects list...');
+        const res = await supabase.from('projects').upsert(DEFAULT_DATA.projects);
+        console.log('[Supabase Seed Response] projects:', { status: res.status, error: res.error });
       }
-      if (DEFAULT_DATA.certifications.length > 0) {
-        const dbCerts = DEFAULT_DATA.certifications.map(mapCertToDB);
-        await supabase.from('certifications').upsert(dbCerts);
+      if ((!certsRes.data || certsRes.data.length === 0) && DEFAULT_DATA.certifications.length > 0) {
+        console.log('[Supabase Seed] Seeding certifications list...');
+        const res = await supabase.from('certifications').upsert(DEFAULT_DATA.certifications.map(mapCertToDB));
+        console.log('[Supabase Seed Response] certifications:', { status: res.status, error: res.error });
       }
-      if (DEFAULT_DATA.roadmap.length > 0) {
-        await supabase.from('roadmap_items').upsert(DEFAULT_DATA.roadmap);
+      if ((!roadmapRes.data || roadmapRes.data.length === 0) && DEFAULT_DATA.roadmap.length > 0) {
+        console.log('[Supabase Seed] Seeding roadmap list...');
+        const res = await supabase.from('roadmap_items').upsert(DEFAULT_DATA.roadmap);
+        console.log('[Supabase Seed Response] roadmap_items:', { status: res.status, error: res.error });
       }
-      if (DEFAULT_DATA.futureProjects.length > 0) {
-        await supabase.from('future_projects').upsert(DEFAULT_DATA.futureProjects);
+      if ((!futureRes.data || futureRes.data.length === 0) && DEFAULT_DATA.futureProjects.length > 0) {
+        console.log('[Supabase Seed] Seeding future_projects list...');
+        const res = await supabase.from('future_projects').upsert(DEFAULT_DATA.futureProjects);
+        console.log('[Supabase Seed Response] future_projects:', { status: res.status, error: res.error });
       }
-      if (DEFAULT_DATA.socialLinks.length > 0) {
-        await supabase.from('social_links').upsert(DEFAULT_DATA.socialLinks);
+      if ((!socialRes.data || socialRes.data.length === 0) && DEFAULT_DATA.socialLinks.length > 0) {
+        console.log('[Supabase Seed] Seeding social_links list...');
+        const res = await supabase.from('social_links').upsert(DEFAULT_DATA.socialLinks);
+        console.log('[Supabase Seed Response] social_links:', { status: res.status, error: res.error });
       }
-      console.log('Database seeding completed successfully.');
+      console.log('[Supabase Seed] Seeding check completed.');
     } catch (err) {
-      console.error('Failed to seed database:', err);
+      console.error('[Supabase Seed Exception] Error seeding tables:', err);
     }
   };
 
@@ -490,15 +508,39 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        const hasConfigs = configsRes.data && configsRes.data.length > 0;
         const { data: { session } } = await supabase.auth.getSession();
 
-        // Trigger automatic seeding if database exists but is completely empty and authenticated
-        if (!hasConfigs && session) {
-          await seedDatabase();
-          // Reload values after seeding completes
-          loadSupabaseData();
-          return;
+        // Perform seeding check for any unseeded configs/lists if authenticated admin is logged in
+        if (session) {
+          await seedDatabase(configsRes, skillsRes, servicesRes, projectsRes, certsRes, roadmapRes, futureRes, socialRes);
+          // Refetch to get newly seeded records
+          const [
+            newConfigs,
+            newSkills,
+            newServices,
+            newProjects,
+            newCerts,
+            newRoadmap,
+            newFuture,
+            newSocial
+          ] = await Promise.all([
+            supabase.from('portfolio_configs').select('*'),
+            supabase.from('skills').select('*').order('order', { ascending: true }),
+            supabase.from('services').select('*').order('order', { ascending: true }),
+            supabase.from('projects').select('*').order('order', { ascending: true }),
+            supabase.from('certifications').select('*').order('order', { ascending: true }),
+            supabase.from('roadmap_items').select('*').order('order', { ascending: true }),
+            supabase.from('future_projects').select('*').order('order', { ascending: true }),
+            supabase.from('social_links').select('*').order('order', { ascending: true })
+          ]);
+          configsRes.data = newConfigs.data;
+          skillsRes.data = newSkills.data;
+          servicesRes.data = newServices.data;
+          projectsRes.data = newProjects.data;
+          certsRes.data = newCerts.data;
+          roadmapRes.data = newRoadmap.data;
+          futureRes.data = newFuture.data;
+          socialRes.data = newSocial.data;
         }
 
         // Parse configurations
@@ -509,7 +551,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         let siteSettings = DEFAULT_DATA.siteSettings;
         let sectionVisibility = DEFAULT_DATA.sectionVisibility;
 
-        if (configsRes.data) {
+        if (configsRes.data && configsRes.data.length > 0) {
           configsRes.data.forEach((row: any) => {
             if (row.key === 'hero') hero = row.value;
             else if (row.key === 'about') about = row.value;
@@ -520,14 +562,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           });
         }
 
-        // Parse lists
-        const skills = skillsRes.data || [];
-        const services = (servicesRes.data || []).map(mapServiceFromDB);
-        const projects = projectsRes.data || [];
-        const certifications = (certsRes.data || []).map(mapCertFromDB);
-        const roadmap = roadmapRes.data || [];
-        const futureProjects = futureRes.data || [];
-        const socialLinks = socialRes.data || [];
+        // Parse lists (fall back to DEFAULT_DATA only if database query returned no results/null)
+        const skills = skillsRes.data && skillsRes.data.length > 0 ? skillsRes.data : DEFAULT_DATA.skills;
+        const services = servicesRes.data && servicesRes.data.length > 0 
+          ? servicesRes.data.map(mapServiceFromDB) 
+          : DEFAULT_DATA.services;
+        const projects = projectsRes.data && projectsRes.data.length > 0 ? projectsRes.data : DEFAULT_DATA.projects;
+        const certifications = certsRes.data && certsRes.data.length > 0 
+          ? certsRes.data.map(mapCertFromDB) 
+          : DEFAULT_DATA.certifications;
+        const roadmap = roadmapRes.data && roadmapRes.data.length > 0 ? roadmapRes.data : DEFAULT_DATA.roadmap;
+        const futureProjects = futureRes.data && futureRes.data.length > 0 ? futureRes.data : DEFAULT_DATA.futureProjects;
+        const socialLinks = socialRes.data && socialRes.data.length > 0 ? socialRes.data : DEFAULT_DATA.socialLinks;
 
         // Load contact messages if authenticated
         let contactMessages = data.contactMessages;
@@ -581,64 +627,106 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     data,
     updateHero: async (hero) => {
       update(d => ({ ...d, hero }));
+      const tableName = 'portfolio_configs';
+      const payload = { key: 'hero', value: hero };
       try {
-        await supabase.from('portfolio_configs').upsert({ key: 'hero', value: hero });
-      } catch (err) { console.error('Error saving hero:', err); }
+        const res = await supabase.from(tableName).upsert(payload);
+        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName}`, err);
+      }
     },
     updateAbout: async (about) => {
       update(d => ({ ...d, about }));
+      const tableName = 'portfolio_configs';
+      const payload = { key: 'about', value: about };
       try {
-        await supabase.from('portfolio_configs').upsert({ key: 'about', value: about });
-      } catch (err) { console.error('Error saving about:', err); }
+        const res = await supabase.from(tableName).upsert(payload);
+        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName}`, err);
+      }
     },
     updateEducation: async (edu) => {
       update(d => ({ ...d, education: edu }));
+      const tableName = 'portfolio_configs';
+      const payload = { key: 'education', value: edu };
       try {
-        await supabase.from('portfolio_configs').upsert({ key: 'education', value: edu });
-      } catch (err) { console.error('Error saving education:', err); }
+        const res = await supabase.from(tableName).upsert(payload);
+        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName}`, err);
+      }
     },
     updateTraining: async (training) => {
       update(d => ({ ...d, training }));
+      const tableName = 'portfolio_configs';
+      const payload = { key: 'training', value: training };
       try {
-        await supabase.from('portfolio_configs').upsert({ key: 'training', value: training });
-      } catch (err) { console.error('Error saving training:', err); }
+        const res = await supabase.from(tableName).upsert(payload);
+        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName}`, err);
+      }
     },
 
     addSkill: async (skill) => {
       const newItem = { ...skill, id: uid(), order: data.skills.length };
       update(d => ({ ...d, skills: [...d.skills, newItem] }));
+      const tableName = 'skills';
       try {
-        await supabase.from('skills').insert(newItem);
-      } catch (err) { console.error('Error adding skill:', err); }
+        const res = await supabase.from(tableName).insert(newItem);
+        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: newItem, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+      }
     },
     updateSkill: async (id, skill) => {
       update(d => ({ ...d, skills: d.skills.map(s => s.id === id ? { ...s, ...skill } : s) }));
+      const tableName = 'skills';
       try {
-        await supabase.from('skills').update(skill).eq('id', id);
-      } catch (err) { console.error('Error updating skill:', err); }
+        const res = await supabase.from(tableName).update(skill).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: skill, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+      }
     },
     deleteSkill: async (id) => {
       update(d => ({ ...d, skills: d.skills.filter(s => s.id !== id) }));
+      const tableName = 'skills';
       try {
-        await supabase.from('skills').delete().eq('id', id);
-      } catch (err) { console.error('Error deleting skill:', err); }
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
     reorderSkills: async (skills) => {
       update(d => ({ ...d, skills }));
+      const tableName = 'skills';
       try {
-        await supabase.from('skills').upsert(skills);
-      } catch (err) { console.error('Error reordering skills:', err); }
+        const res = await supabase.from(tableName).upsert(skills);
+        console.log(`[Supabase Write] Table: ${tableName} (Reorder/Upsert)`, { payload: skills, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Reorder)`, err);
+      }
     },
 
     addService: async (service) => {
       const newItem = { ...service, id: uid(), order: data.services.length };
       update(d => ({ ...d, services: [...d.services, newItem] }));
+      const tableName = 'services';
+      const dbPayload = mapServiceToDB(newItem);
       try {
-        await supabase.from('services').insert(mapServiceToDB(newItem));
-      } catch (err) { console.error('Error adding service:', err); }
+        const res = await supabase.from(tableName).insert(dbPayload);
+        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: dbPayload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+      }
     },
     updateService: async (id, service) => {
       update(d => ({ ...d, services: d.services.map(s => s.id === id ? { ...s, ...service } : s) }));
+      const tableName = 'services';
       const mappedUpdate: any = {};
       if (service.title !== undefined) mappedUpdate.title = service.title;
       if (service.description !== undefined) mappedUpdate.description = service.description;
@@ -650,45 +738,70 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       if (service.order !== undefined) mappedUpdate.order = service.order;
 
       try {
-        await supabase.from('services').update(mappedUpdate).eq('id', id);
-      } catch (err) { console.error('Error updating service:', err); }
+        const res = await supabase.from(tableName).update(mappedUpdate).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: mappedUpdate, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+      }
     },
     deleteService: async (id) => {
       update(d => ({ ...d, services: d.services.filter(s => s.id !== id) }));
+      const tableName = 'services';
       try {
-        await supabase.from('services').delete().eq('id', id);
-      } catch (err) { console.error('Error deleting service:', err); }
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
 
     addProject: async (project) => {
       const newItem = { ...project, id: uid(), order: data.projects.length };
       update(d => ({ ...d, projects: [...d.projects, newItem] }));
+      const tableName = 'projects';
       try {
-        await supabase.from('projects').insert(newItem);
-      } catch (err) { console.error('Error adding project:', err); }
+        const res = await supabase.from(tableName).insert(newItem);
+        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: newItem, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+      }
     },
     updateProject: async (id, project) => {
       update(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, ...project } : p) }));
+      const tableName = 'projects';
       try {
-        await supabase.from('projects').update(project).eq('id', id);
-      } catch (err) { console.error('Error updating project:', err); }
+        const res = await supabase.from(tableName).update(project).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: project, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+      }
     },
     deleteProject: async (id) => {
       update(d => ({ ...d, projects: d.projects.filter(p => p.id !== id) }));
+      const tableName = 'projects';
       try {
-        await supabase.from('projects').delete().eq('id', id);
-      } catch (err) { console.error('Error deleting project:', err); }
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
 
     addCertification: async (cert) => {
       const newItem = { ...cert, id: uid(), order: data.certifications.length };
       update(d => ({ ...d, certifications: [...d.certifications, newItem] }));
+      const tableName = 'certifications';
+      const dbPayload = mapCertToDB(newItem);
       try {
-        await supabase.from('certifications').insert(mapCertToDB(newItem));
-      } catch (err) { console.error('Error adding certification:', err); }
+        const res = await supabase.from(tableName).insert(dbPayload);
+        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: dbPayload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+      }
     },
     updateCertification: async (id, cert) => {
       update(d => ({ ...d, certifications: d.certifications.map(c => c.id === id ? { ...c, ...cert } : c) }));
+      const tableName = 'certifications';
       const mappedUpdate: any = {};
       if (cert.title !== undefined) mappedUpdate.title = cert.title;
       if (cert.issuer !== undefined) mappedUpdate.issuer = cert.issuer;
@@ -702,117 +815,187 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       if (cert.order !== undefined) mappedUpdate.order = cert.order;
 
       try {
-        await supabase.from('certifications').update(mappedUpdate).eq('id', id);
-      } catch (err) { console.error('Error updating certification:', err); }
+        const res = await supabase.from(tableName).update(mappedUpdate).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: mappedUpdate, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+      }
     },
     deleteCertification: async (id) => {
       update(d => ({ ...d, certifications: d.certifications.filter(c => c.id !== id) }));
+      const tableName = 'certifications';
       try {
-        await supabase.from('certifications').delete().eq('id', id);
-      } catch (err) { console.error('Error deleting certification:', err); }
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
 
     addRoadmapItem: async (item) => {
       const newItem = { ...item, id: uid(), order: data.roadmap.length };
       update(d => ({ ...d, roadmap: [...d.roadmap, newItem] }));
+      const tableName = 'roadmap_items';
       try {
-        await supabase.from('roadmap_items').insert(newItem);
-      } catch (err) { console.error('Error adding roadmap item:', err); }
+        const res = await supabase.from(tableName).insert(newItem);
+        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: newItem, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+      }
     },
     updateRoadmapItem: async (id, item) => {
       update(d => ({ ...d, roadmap: d.roadmap.map(r => r.id === id ? { ...r, ...item } : r) }));
+      const tableName = 'roadmap_items';
       try {
-        await supabase.from('roadmap_items').update(item).eq('id', id);
-      } catch (err) { console.error('Error updating roadmap item:', err); }
+        const res = await supabase.from(tableName).update(item).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: item, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+      }
     },
     deleteRoadmapItem: async (id) => {
       update(d => ({ ...d, roadmap: d.roadmap.filter(r => r.id !== id) }));
+      const tableName = 'roadmap_items';
       try {
-        await supabase.from('roadmap_items').delete().eq('id', id);
-      } catch (err) { console.error('Error deleting roadmap item:', err); }
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
     reorderRoadmap: async (roadmap) => {
       update(d => ({ ...d, roadmap }));
+      const tableName = 'roadmap_items';
       try {
-        await supabase.from('roadmap_items').upsert(roadmap);
-      } catch (err) { console.error('Error reordering roadmap:', err); }
+        const res = await supabase.from(tableName).upsert(roadmap);
+        console.log(`[Supabase Write] Table: ${tableName} (Reorder/Upsert)`, { payload: roadmap, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Reorder)`, err);
+      }
     },
 
     addFutureProject: async (proj) => {
       const newItem = { ...proj, id: uid(), order: data.futureProjects.length };
       update(d => ({ ...d, futureProjects: [...d.futureProjects, newItem] }));
+      const tableName = 'future_projects';
       try {
-        await supabase.from('future_projects').insert(newItem);
-      } catch (err) { console.error('Error adding future project:', err); }
+        const res = await supabase.from(tableName).insert(newItem);
+        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: newItem, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+      }
     },
     updateFutureProject: async (id, proj) => {
       update(d => ({ ...d, futureProjects: d.futureProjects.map(p => p.id === id ? { ...p, ...proj } : p) }));
+      const tableName = 'future_projects';
       try {
-        await supabase.from('future_projects').update(proj).eq('id', id);
-      } catch (err) { console.error('Error updating future project:', err); }
+        const res = await supabase.from(tableName).update(proj).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: proj, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+      }
     },
     deleteFutureProject: async (id) => {
       update(d => ({ ...d, futureProjects: d.futureProjects.filter(p => p.id !== id) }));
+      const tableName = 'future_projects';
       try {
-        await supabase.from('future_projects').delete().eq('id', id);
-      } catch (err) { console.error('Error deleting future project:', err); }
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
 
     addContactMessage: (msg) => update(d => ({ ...d, contactMessages: [...d.contactMessages, { ...msg, id: uid(), date: new Date().toISOString(), resolved: false }] })),
     deleteContactMessage: async (id) => {
       update(d => ({ ...d, contactMessages: d.contactMessages.filter(m => m.id !== id) }));
+      const tableName = 'contact_messages';
       try {
-        await supabase.from('contact_messages').delete().eq('id', id);
-      } catch (err) { console.error('Error deleting message:', err); }
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
     resolveContactMessage: async (id) => {
       update(d => ({ ...d, contactMessages: d.contactMessages.map(m => m.id === id ? { ...m, resolved: true } : m) }));
+      const tableName = 'contact_messages';
       try {
-        await supabase.from('contact_messages').update({ resolved: true }).eq('id', id);
-      } catch (err) { console.error('Error resolving message:', err); }
+        const res = await supabase.from(tableName).update({ resolved: true }).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update/Resolve)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update/Resolve)`, err);
+      }
     },
 
     addSocialLink: async (link) => {
       const newItem = { ...link, id: uid(), order: data.socialLinks.length };
       update(d => ({ ...d, socialLinks: [...d.socialLinks, newItem] }));
+      const tableName = 'social_links';
       try {
-        await supabase.from('social_links').insert(newItem);
-      } catch (err) { console.error('Error adding social link:', err); }
+        const res = await supabase.from(tableName).insert(newItem);
+        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: newItem, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+      }
     },
     updateSocialLink: async (id, link) => {
       update(d => ({ ...d, socialLinks: d.socialLinks.map(s => s.id === id ? { ...s, ...link } : s) }));
+      const tableName = 'social_links';
       try {
-        await supabase.from('social_links').update(link).eq('id', id);
-      } catch (err) { console.error('Error updating social link:', err); }
+        const res = await supabase.from(tableName).update(link).eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: link, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+      }
     },
     deleteSocialLink: async (id) => {
       const updated = data.socialLinks.filter(s => s.id !== id).map((s, idx) => ({ ...s, order: idx }));
       update(d => ({ ...d, socialLinks: updated }));
+      const tableName = 'social_links';
       try {
-        await supabase.from('social_links').delete().eq('id', id);
+        const res = await supabase.from(tableName).delete().eq('id', id);
+        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
         if (updated.length > 0) {
-          await supabase.from('social_links').upsert(updated);
+          const resUpsert = await supabase.from(tableName).upsert(updated);
+          console.log(`[Supabase Write] Table: ${tableName} (Delete/Reorder)`, { payload: updated, status: resUpsert.status, statusText: resUpsert.statusText, error: resUpsert.error });
         }
-      } catch (err) { console.error('Error deleting social link:', err); }
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+      }
     },
     reorderSocialLinks: async (socialLinks) => {
       update(d => ({ ...d, socialLinks }));
+      const tableName = 'social_links';
       try {
-        await supabase.from('social_links').upsert(socialLinks);
-      } catch (err) { console.error('Error reordering social links:', err); }
+        const res = await supabase.from(tableName).upsert(socialLinks);
+        console.log(`[Supabase Write] Table: ${tableName} (Reorder/Upsert)`, { payload: socialLinks, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName} (Reorder)`, err);
+      }
     },
 
     updateSiteSettings: async (settings) => {
       update(d => ({ ...d, siteSettings: settings }));
+      const tableName = 'portfolio_configs';
+      const payload = { key: 'siteSettings', value: settings };
       try {
-        await supabase.from('portfolio_configs').upsert({ key: 'siteSettings', value: settings });
-      } catch (err) { console.error('Error saving site settings:', err); }
+        const res = await supabase.from(tableName).upsert(payload);
+        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName}`, err);
+      }
     },
     updateSectionVisibility: async (visibility) => {
       update(d => ({ ...d, sectionVisibility: visibility }));
+      const tableName = 'portfolio_configs';
+      const payload = { key: 'sectionVisibility', value: visibility };
       try {
-        await supabase.from('portfolio_configs').upsert({ key: 'sectionVisibility', value: visibility });
-      } catch (err) { console.error('Error saving section visibility:', err); }
+        const res = await supabase.from(tableName).upsert(payload);
+        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+      } catch (err: any) {
+        console.error(`[Supabase Exception] Table: ${tableName}`, err);
+      }
     },
     incrementVisitors: () => update(d => ({ ...d, visitors: d.visitors + 1 })),
   };
