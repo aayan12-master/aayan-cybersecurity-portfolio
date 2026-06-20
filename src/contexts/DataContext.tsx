@@ -10,7 +10,8 @@ export interface HeroContent {
   email: string;
   location: string;
   description: string;
-  learningHours: string;
+  heroStatValue: string;
+  heroStatLabel: string;
   trainingBadge: string;
 }
 
@@ -224,7 +225,8 @@ const DEFAULT_DATA: SiteData = {
     location: 'Ahmednagar, Maharashtra, India',
     description:
       'Currently building strong foundations in cybersecurity through structured training, hands-on practice, and continuous learning.',
-    learningHours: '2-3',
+    heroStatValue: '2-3',
+    heroStatLabel: 'Hours Daily Learning Journey',
     trainingBadge: 'Skill Rise Academy',
   },
   about: {
@@ -553,7 +555,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
         if (configsRes.data && configsRes.data.length > 0) {
           configsRes.data.forEach((row: any) => {
-            if (row.key === 'hero') hero = row.value;
+            if (row.key === 'hero') {
+              hero = {
+                ...DEFAULT_DATA.hero,
+                ...row.value,
+                heroStatValue: row.value.heroStatValue || row.value.learningHours || '2-3',
+                heroStatLabel: row.value.heroStatLabel || 'Hours Daily Learning Journey'
+              };
+            }
             else if (row.key === 'about') about = row.value;
             else if (row.key === 'education') education = row.value;
             else if (row.key === 'training') training = row.value;

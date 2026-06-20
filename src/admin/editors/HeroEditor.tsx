@@ -54,9 +54,14 @@ const HeroEditor = () => {
               <input value={form.location} onChange={e => set('location', e.target.value)} placeholder="Ahmednagar, Maharashtra, India" />
             </div>
             <div className="form-group">
-              <label>Daily Learning Hours</label>
-              <input value={form.learningHours} onChange={e => set('learningHours', e.target.value)} placeholder="2-3" />
+              <label>Hero Stat Value</label>
+              <input value={form.heroStatValue || ''} onChange={e => set('heroStatValue', e.target.value)} placeholder="2-3" />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>Hero Stat Label</label>
+            <input value={form.heroStatLabel || ''} onChange={e => set('heroStatLabel', e.target.value)} placeholder="Hours Daily Learning Journey" />
           </div>
 
           <div className="form-group">

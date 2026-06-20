@@ -58,8 +58,8 @@ const Hero = () => {
         </div>
 
         <div className="learning-counter">
-          <span className="counter-number text-accent">{hero.learningHours}</span>
-          <span className="counter-text text-secondary">Hours Daily Learning Journey</span>
+          <span className="counter-number text-accent">{hero.heroStatValue || '2-3'}</span>
+          <span className="counter-text text-secondary">{hero.heroStatLabel || 'Hours Daily Learning Journey'}</span>
         </div>
       </motion.div>
 
