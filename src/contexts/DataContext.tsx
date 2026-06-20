@@ -12,7 +12,9 @@ export interface HeroContent {
   description: string;
   heroStatValue: string;
   heroStatLabel: string;
-  trainingBadge: string;
+  badgeTitle: string;
+  badgeSubtitle: string;
+  showProfileBadge: boolean;
 }
 
 export interface AboutContent {
@@ -227,7 +229,9 @@ const DEFAULT_DATA: SiteData = {
       'Currently building strong foundations in cybersecurity through structured training, hands-on practice, and continuous learning.',
     heroStatValue: '2-3',
     heroStatLabel: 'Hours Daily Learning Journey',
-    trainingBadge: 'Skill Rise Academy',
+    badgeTitle: 'Training',
+    badgeSubtitle: 'Skill Rise Academy',
+    showProfileBadge: true,
   },
   about: {
     heading: 'About Me',
@@ -560,7 +564,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 ...DEFAULT_DATA.hero,
                 ...row.value,
                 heroStatValue: row.value.heroStatValue || row.value.learningHours || '2-3',
-                heroStatLabel: row.value.heroStatLabel || 'Hours Daily Learning Journey'
+                heroStatLabel: row.value.heroStatLabel || 'Hours Daily Learning Journey',
+                badgeTitle: row.value.badgeTitle || 'Training',
+                badgeSubtitle: row.value.badgeSubtitle || row.value.trainingBadge || 'Skill Rise Academy',
+                showProfileBadge: row.value.showProfileBadge !== undefined ? row.value.showProfileBadge : true
               };
             }
             else if (row.key === 'about') about = row.value;

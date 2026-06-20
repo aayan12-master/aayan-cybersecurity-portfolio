@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Save, User, CheckCircle } from 'lucide-react';
+import { Save, User, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import '../admin-shared.css';
 
 const HeroEditor = () => {
@@ -8,7 +8,7 @@ const HeroEditor = () => {
   const [form, setForm] = useState({ ...data.hero });
   const [saved, setSaved] = useState(false);
 
-  const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }));
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +69,37 @@ const HeroEditor = () => {
             <textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
           </div>
 
-          <div className="form-group">
-            <label>Training Badge Text</label>
-            <input value={form.trainingBadge} onChange={e => set('trainingBadge', e.target.value)} placeholder="Skill Rise Academy" />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Profile Badge Title</label>
+              <input value={form.badgeTitle || ''} onChange={e => set('badgeTitle', e.target.value)} placeholder="Training" />
+            </div>
+            <div className="form-group">
+              <label>Profile Badge Subtitle</label>
+              <input value={form.badgeSubtitle || ''} onChange={e => set('badgeSubtitle', e.target.value)} placeholder="Skill Rise Academy" />
+            </div>
+          </div>
+
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <label>Profile Badge Visibility</label>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, showProfileBadge: f.showProfileBadge === undefined ? false : !f.showProfileBadge }))}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                background: form.showProfileBadge !== false ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.08)',
+                border: `1px solid ${form.showProfileBadge !== false ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.2)'}`,
+                color: form.showProfileBadge !== false ? '#4ade80' : '#f87171',
+                borderRadius: 8, padding: '0.5rem 1rem', cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.85rem',
+                transition: 'all 0.2s', width: 'fit-content'
+              }}
+            >
+              {form.showProfileBadge !== false
+                ? <><Eye size={15} /> Visible (On Homepage)</>
+                : <><EyeOff size={15} /> Hidden (On Homepage)</>
+              }
+            </button>
           </div>
 
           <div className="admin-save-bar">

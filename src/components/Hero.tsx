@@ -109,15 +109,17 @@ const Hero = () => {
           </div>
         </div>
 
-        <div className="cert-badge flex items-center gap-sm">
-          <div className="badge-icon">
-            <Award size={24} className="text-accent" aria-hidden="true" />
+        {hero.showProfileBadge !== false && (
+          <div className="cert-badge flex items-center gap-sm">
+            <div className="badge-icon">
+              <Award size={24} className="text-accent" aria-hidden="true" />
+            </div>
+            <div className="badge-info">
+              <span className="badge-title">{hero.badgeTitle || 'Training'}</span>
+              <span className="badge-desc text-secondary">{hero.badgeSubtitle || 'Skill Rise Academy'}</span>
+            </div>
           </div>
-          <div className="badge-info">
-            <span className="badge-title">Training</span>
-            <span className="badge-desc text-secondary">{hero.trainingBadge}</span>
-          </div>
-        </div>
+        )}
       </motion.div>
 
     </section>
