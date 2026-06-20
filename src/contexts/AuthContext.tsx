@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { supabase } from '../utils/supabaseClient';
 
 const ADMIN_USERNAME = import.meta.env.VITE_ADMIN_USERNAME || 'aayan';
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD_HASH || 'AayanAdmin@2026';
@@ -78,6 +79,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLockedOut(false);
       setLockoutRemainingMs(0);
       setRemainingAttempts(MAX_LOGIN_ATTEMPTS);
+
+      // Authenticate with Supabase Auth in the background to acquire RLS session token
+      const email = 'aayansayyad168@gmail.com';
+      supabase.auth.signInWithPassword({ email, password }).then(({ error }) => {
+        if (error) {
+          console.warn('Supabase Auth sign-in failed. Attempting auto-registration...', error.message);
+          if (error.message.includes('Invalid login credentials') || error.message.includes('User not found')) {
+            supabase.auth.signUp({ email, password }).then(({ error: signUpError }) => {
+              if (signUpError) {
+                console.error('Supabase Auth auto-signup failed:', signUpError.message);
+              } else {
+                console.log('Supabase Auth admin user signed up. Authenticating...');
+                supabase.auth.signInWithPassword({ email, password });
+              }
+            });
+          }
+        } else {
+          console.log('Successfully authenticated with Supabase Auth.');
+        }
+      });
+
       return { success: true, message: '' };
     }
 
@@ -119,6 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLockedOut(false);
     setLockoutRemainingMs(0);
     setRemainingAttempts(MAX_LOGIN_ATTEMPTS);
+    supabase.auth.signOut(); // Clear Supabase Auth session token
   };
 
   return (

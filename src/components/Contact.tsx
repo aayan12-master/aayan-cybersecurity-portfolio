@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, MapPin, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import { supabase } from '../utils/supabaseClient';
 import './Contact.css';
 
 interface FormState {
@@ -107,6 +108,27 @@ const Contact = () => {
             const result = await response.json();
             if (!response.ok || !result.success) {
                 throw new Error(result.message || 'Failed to submit via Web3Forms');
+            }
+
+            // Also insert into Supabase
+            try {
+                const { error: dbError } = await supabase
+                    .from('contact_messages')
+                    .insert([
+                        {
+                            name: form.name.trim(),
+                            email: form.email.trim(),
+                            subject: form.subject.trim(),
+                            message: form.message.trim(),
+                            resolved: false
+                        }
+                    ]);
+                if (dbError) {
+                    console.error('Supabase DB Insert Error:', dbError);
+                    // Do not block the visitor if Web3Forms sent successfully
+                }
+            } catch (dbErr) {
+                console.error('Supabase client exception:', dbErr);
             }
 
             addContactMessage({
