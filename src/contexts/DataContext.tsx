@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { supabase } from '../utils/supabaseClient';
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 
@@ -152,6 +153,60 @@ export interface SiteData {
   sectionVisibility: SectionVisibility;
   visitors: number;
 }
+
+// ─── DB Column Mappers ────────────────────────────────────────────────────────
+
+const mapServiceFromDB = (s: any): Service => ({
+  id: s.id,
+  title: s.title,
+  description: s.description,
+  iconName: s.icon_name,
+  ctaText: s.cta_text || undefined,
+  actionType: s.action_type || undefined,
+  inquirySubject: s.inquiry_subject || undefined,
+  externalUrl: s.external_url || undefined,
+  order: s.order
+});
+
+const mapServiceToDB = (s: Service) => ({
+  id: s.id,
+  title: s.title,
+  description: s.description,
+  icon_name: s.iconName,
+  cta_text: s.ctaText || null,
+  action_type: s.actionType || null,
+  inquiry_subject: s.inquirySubject || null,
+  external_url: s.externalUrl || null,
+  order: s.order
+});
+
+const mapCertFromDB = (c: any): Certification => ({
+  id: c.id,
+  title: c.title,
+  issuer: c.issuer,
+  issueDate: c.issue_date,
+  status: c.status,
+  description: c.description,
+  imageUrl: c.image_url,
+  pdfUrl: c.pdf_url,
+  verificationLink: c.verification_link,
+  credentialId: c.credential_id,
+  order: c.order
+});
+
+const mapCertToDB = (c: Certification) => ({
+  id: c.id,
+  title: c.title,
+  issuer: c.issuer,
+  issue_date: c.issueDate,
+  status: c.status,
+  description: c.description,
+  image_url: c.imageUrl,
+  pdf_url: c.pdfUrl,
+  verification_link: c.verificationLink,
+  credential_id: c.credentialId,
+  order: c.order
+});
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -354,58 +409,411 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     return DEFAULT_DATA;
   });
 
+  // Keep localStorage as a synchronous offline backup
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data]);
+
+  // Seeding routine
+  const seedDatabase = async () => {
+    console.log('Supabase database is empty. Seeding with default data...');
+    try {
+      // 1. Seed configs
+      const configs = [
+        { key: 'hero', value: DEFAULT_DATA.hero },
+        { key: 'about', value: DEFAULT_DATA.about },
+        { key: 'education', value: DEFAULT_DATA.education },
+        { key: 'training', value: DEFAULT_DATA.training },
+        { key: 'siteSettings', value: DEFAULT_DATA.siteSettings },
+        { key: 'sectionVisibility', value: DEFAULT_DATA.sectionVisibility }
+      ];
+      await supabase.from('portfolio_configs').upsert(configs);
+
+      // 2. Seed lists
+      if (DEFAULT_DATA.skills.length > 0) {
+        await supabase.from('skills').upsert(DEFAULT_DATA.skills);
+      }
+      if (DEFAULT_DATA.services.length > 0) {
+        const dbServices = DEFAULT_DATA.services.map(mapServiceToDB);
+        await supabase.from('services').upsert(dbServices);
+      }
+      if (DEFAULT_DATA.projects.length > 0) {
+        await supabase.from('projects').upsert(DEFAULT_DATA.projects);
+      }
+      if (DEFAULT_DATA.certifications.length > 0) {
+        const dbCerts = DEFAULT_DATA.certifications.map(mapCertToDB);
+        await supabase.from('certifications').upsert(dbCerts);
+      }
+      if (DEFAULT_DATA.roadmap.length > 0) {
+        await supabase.from('roadmap_items').upsert(DEFAULT_DATA.roadmap);
+      }
+      if (DEFAULT_DATA.futureProjects.length > 0) {
+        await supabase.from('future_projects').upsert(DEFAULT_DATA.futureProjects);
+      }
+      if (DEFAULT_DATA.socialLinks.length > 0) {
+        await supabase.from('social_links').upsert(DEFAULT_DATA.socialLinks);
+      }
+      console.log('Database seeding completed successfully.');
+    } catch (err) {
+      console.error('Failed to seed database:', err);
+    }
+  };
+
+  // Hydrate context from Supabase on mount
+  useEffect(() => {
+    const loadSupabaseData = async () => {
+      try {
+        console.log('Hydrating context from Supabase...');
+        const [
+          configsRes,
+          skillsRes,
+          servicesRes,
+          projectsRes,
+          certsRes,
+          roadmapRes,
+          futureRes,
+          socialRes
+        ] = await Promise.all([
+          supabase.from('portfolio_configs').select('*'),
+          supabase.from('skills').select('*').order('order', { ascending: true }),
+          supabase.from('services').select('*').order('order', { ascending: true }),
+          supabase.from('projects').select('*').order('order', { ascending: true }),
+          supabase.from('certifications').select('*').order('order', { ascending: true }),
+          supabase.from('roadmap_items').select('*').order('order', { ascending: true }),
+          supabase.from('future_projects').select('*').order('order', { ascending: true }),
+          supabase.from('social_links').select('*').order('order', { ascending: true })
+        ]);
+
+        // If core table configurations query fails because it doesn't exist, fallback to localStorage
+        if (configsRes.error && (configsRes.error.code === 'PGRST205' || configsRes.error.message.includes('relation'))) {
+          console.warn('Supabase DDL tables are missing in the schema. Falling back to local storage cache.');
+          return;
+        }
+
+        const hasConfigs = configsRes.data && configsRes.data.length > 0;
+        const { data: { session } } = await supabase.auth.getSession();
+
+        // Trigger automatic seeding if database exists but is completely empty and authenticated
+        if (!hasConfigs && session) {
+          await seedDatabase();
+          // Reload values after seeding completes
+          loadSupabaseData();
+          return;
+        }
+
+        // Parse configurations
+        let hero = DEFAULT_DATA.hero;
+        let about = DEFAULT_DATA.about;
+        let education = DEFAULT_DATA.education;
+        let training = DEFAULT_DATA.training;
+        let siteSettings = DEFAULT_DATA.siteSettings;
+        let sectionVisibility = DEFAULT_DATA.sectionVisibility;
+
+        if (configsRes.data) {
+          configsRes.data.forEach((row: any) => {
+            if (row.key === 'hero') hero = row.value;
+            else if (row.key === 'about') about = row.value;
+            else if (row.key === 'education') education = row.value;
+            else if (row.key === 'training') training = row.value;
+            else if (row.key === 'siteSettings') siteSettings = row.value;
+            else if (row.key === 'sectionVisibility') sectionVisibility = row.value;
+          });
+        }
+
+        // Parse lists
+        const skills = skillsRes.data || [];
+        const services = (servicesRes.data || []).map(mapServiceFromDB);
+        const projects = projectsRes.data || [];
+        const certifications = (certsRes.data || []).map(mapCertFromDB);
+        const roadmap = roadmapRes.data || [];
+        const futureProjects = futureRes.data || [];
+        const socialLinks = socialRes.data || [];
+
+        // Load contact messages if authenticated
+        let contactMessages = data.contactMessages;
+        if (session) {
+          const { data: msgs, error: msgsError } = await supabase
+            .from('contact_messages')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (!msgsError && msgs) {
+            contactMessages = msgs.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              email: m.email,
+              subject: m.subject,
+              message: m.message,
+              date: m.created_at,
+              resolved: m.resolved
+            }));
+          }
+        }
+
+        setData(prev => ({
+          ...prev,
+          hero,
+          about,
+          education,
+          training,
+          siteSettings,
+          sectionVisibility,
+          skills,
+          services,
+          projects,
+          certifications,
+          roadmap,
+          futureProjects,
+          socialLinks,
+          contactMessages
+        }));
+        console.log('Context successfully hydrated from Supabase.');
+      } catch (err) {
+        console.error('Error loading data from Supabase, falling back:', err);
+      }
+    };
+
+    loadSupabaseData();
+  }, []);
 
   const update = (updater: (prev: SiteData) => SiteData) => setData(updater);
 
   const ctx: DataContextType = {
     data,
-    updateHero: (hero) => update(d => ({ ...d, hero })),
-    updateAbout: (about) => update(d => ({ ...d, about })),
-    updateEducation: (education) => update(d => ({ ...d, education })),
-    updateTraining: (training) => update(d => ({ ...d, training })),
+    updateHero: async (hero) => {
+      update(d => ({ ...d, hero }));
+      try {
+        await supabase.from('portfolio_configs').upsert({ key: 'hero', value: hero });
+      } catch (err) { console.error('Error saving hero:', err); }
+    },
+    updateAbout: async (about) => {
+      update(d => ({ ...d, about }));
+      try {
+        await supabase.from('portfolio_configs').upsert({ key: 'about', value: about });
+      } catch (err) { console.error('Error saving about:', err); }
+    },
+    updateEducation: async (edu) => {
+      update(d => ({ ...d, education: edu }));
+      try {
+        await supabase.from('portfolio_configs').upsert({ key: 'education', value: edu });
+      } catch (err) { console.error('Error saving education:', err); }
+    },
+    updateTraining: async (training) => {
+      update(d => ({ ...d, training }));
+      try {
+        await supabase.from('portfolio_configs').upsert({ key: 'training', value: training });
+      } catch (err) { console.error('Error saving training:', err); }
+    },
 
-    addSkill: (skill) => update(d => ({ ...d, skills: [...d.skills, { ...skill, id: uid(), order: d.skills.length }] })),
-    updateSkill: (id, skill) => update(d => ({ ...d, skills: d.skills.map(s => s.id === id ? { ...s, ...skill } : s) })),
-    deleteSkill: (id) => update(d => ({ ...d, skills: d.skills.filter(s => s.id !== id) })),
-    reorderSkills: (skills) => update(d => ({ ...d, skills })),
+    addSkill: async (skill) => {
+      const newItem = { ...skill, id: uid(), order: data.skills.length };
+      update(d => ({ ...d, skills: [...d.skills, newItem] }));
+      try {
+        await supabase.from('skills').insert(newItem);
+      } catch (err) { console.error('Error adding skill:', err); }
+    },
+    updateSkill: async (id, skill) => {
+      update(d => ({ ...d, skills: d.skills.map(s => s.id === id ? { ...s, ...skill } : s) }));
+      try {
+        await supabase.from('skills').update(skill).eq('id', id);
+      } catch (err) { console.error('Error updating skill:', err); }
+    },
+    deleteSkill: async (id) => {
+      update(d => ({ ...d, skills: d.skills.filter(s => s.id !== id) }));
+      try {
+        await supabase.from('skills').delete().eq('id', id);
+      } catch (err) { console.error('Error deleting skill:', err); }
+    },
+    reorderSkills: async (skills) => {
+      update(d => ({ ...d, skills }));
+      try {
+        await supabase.from('skills').upsert(skills);
+      } catch (err) { console.error('Error reordering skills:', err); }
+    },
 
-    addService: (service) => update(d => ({ ...d, services: [...d.services, { ...service, id: uid(), order: d.services.length }] })),
-    updateService: (id, service) => update(d => ({ ...d, services: d.services.map(s => s.id === id ? { ...s, ...service } : s) })),
-    deleteService: (id) => update(d => ({ ...d, services: d.services.filter(s => s.id !== id) })),
+    addService: async (service) => {
+      const newItem = { ...service, id: uid(), order: data.services.length };
+      update(d => ({ ...d, services: [...d.services, newItem] }));
+      try {
+        await supabase.from('services').insert(mapServiceToDB(newItem));
+      } catch (err) { console.error('Error adding service:', err); }
+    },
+    updateService: async (id, service) => {
+      update(d => ({ ...d, services: d.services.map(s => s.id === id ? { ...s, ...service } : s) }));
+      const mappedUpdate: any = {};
+      if (service.title !== undefined) mappedUpdate.title = service.title;
+      if (service.description !== undefined) mappedUpdate.description = service.description;
+      if (service.iconName !== undefined) mappedUpdate.icon_name = service.iconName;
+      if (service.ctaText !== undefined) mappedUpdate.cta_text = service.ctaText;
+      if (service.actionType !== undefined) mappedUpdate.action_type = service.actionType;
+      if (service.inquirySubject !== undefined) mappedUpdate.inquiry_subject = service.inquirySubject;
+      if (service.externalUrl !== undefined) mappedUpdate.external_url = service.externalUrl;
+      if (service.order !== undefined) mappedUpdate.order = service.order;
 
-    addProject: (project) => update(d => ({ ...d, projects: [...d.projects, { ...project, id: uid(), order: d.projects.length }] })),
-    updateProject: (id, project) => update(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, ...project } : p) })),
-    deleteProject: (id) => update(d => ({ ...d, projects: d.projects.filter(p => p.id !== id) })),
+      try {
+        await supabase.from('services').update(mappedUpdate).eq('id', id);
+      } catch (err) { console.error('Error updating service:', err); }
+    },
+    deleteService: async (id) => {
+      update(d => ({ ...d, services: d.services.filter(s => s.id !== id) }));
+      try {
+        await supabase.from('services').delete().eq('id', id);
+      } catch (err) { console.error('Error deleting service:', err); }
+    },
 
-    addCertification: (cert) => update(d => ({ ...d, certifications: [...d.certifications, { ...cert, id: uid(), order: d.certifications.length }] })),
-    updateCertification: (id, cert) => update(d => ({ ...d, certifications: d.certifications.map(c => c.id === id ? { ...c, ...cert } : c) })),
-    deleteCertification: (id) => update(d => ({ ...d, certifications: d.certifications.filter(c => c.id !== id) })),
+    addProject: async (project) => {
+      const newItem = { ...project, id: uid(), order: data.projects.length };
+      update(d => ({ ...d, projects: [...d.projects, newItem] }));
+      try {
+        await supabase.from('projects').insert(newItem);
+      } catch (err) { console.error('Error adding project:', err); }
+    },
+    updateProject: async (id, project) => {
+      update(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, ...project } : p) }));
+      try {
+        await supabase.from('projects').update(project).eq('id', id);
+      } catch (err) { console.error('Error updating project:', err); }
+    },
+    deleteProject: async (id) => {
+      update(d => ({ ...d, projects: d.projects.filter(p => p.id !== id) }));
+      try {
+        await supabase.from('projects').delete().eq('id', id);
+      } catch (err) { console.error('Error deleting project:', err); }
+    },
 
-    addRoadmapItem: (item) => update(d => ({ ...d, roadmap: [...d.roadmap, { ...item, id: uid(), order: d.roadmap.length }] })),
-    updateRoadmapItem: (id, item) => update(d => ({ ...d, roadmap: d.roadmap.map(r => r.id === id ? { ...r, ...item } : r) })),
-    deleteRoadmapItem: (id) => update(d => ({ ...d, roadmap: d.roadmap.filter(r => r.id !== id) })),
-    reorderRoadmap: (roadmap) => update(d => ({ ...d, roadmap })),
+    addCertification: async (cert) => {
+      const newItem = { ...cert, id: uid(), order: data.certifications.length };
+      update(d => ({ ...d, certifications: [...d.certifications, newItem] }));
+      try {
+        await supabase.from('certifications').insert(mapCertToDB(newItem));
+      } catch (err) { console.error('Error adding certification:', err); }
+    },
+    updateCertification: async (id, cert) => {
+      update(d => ({ ...d, certifications: d.certifications.map(c => c.id === id ? { ...c, ...cert } : c) }));
+      const mappedUpdate: any = {};
+      if (cert.title !== undefined) mappedUpdate.title = cert.title;
+      if (cert.issuer !== undefined) mappedUpdate.issuer = cert.issuer;
+      if (cert.issueDate !== undefined) mappedUpdate.issue_date = cert.issueDate;
+      if (cert.status !== undefined) mappedUpdate.status = cert.status;
+      if (cert.description !== undefined) mappedUpdate.description = cert.description;
+      if (cert.imageUrl !== undefined) mappedUpdate.image_url = cert.imageUrl;
+      if (cert.pdfUrl !== undefined) mappedUpdate.pdf_url = cert.pdfUrl;
+      if (cert.verificationLink !== undefined) mappedUpdate.verification_link = cert.verificationLink;
+      if (cert.credentialId !== undefined) mappedUpdate.credential_id = cert.credentialId;
+      if (cert.order !== undefined) mappedUpdate.order = cert.order;
 
-    addFutureProject: (proj) => update(d => ({ ...d, futureProjects: [...d.futureProjects, { ...proj, id: uid(), order: d.futureProjects.length }] })),
-    updateFutureProject: (id, proj) => update(d => ({ ...d, futureProjects: d.futureProjects.map(p => p.id === id ? { ...p, ...proj } : p) })),
-    deleteFutureProject: (id) => update(d => ({ ...d, futureProjects: d.futureProjects.filter(p => p.id !== id) })),
+      try {
+        await supabase.from('certifications').update(mappedUpdate).eq('id', id);
+      } catch (err) { console.error('Error updating certification:', err); }
+    },
+    deleteCertification: async (id) => {
+      update(d => ({ ...d, certifications: d.certifications.filter(c => c.id !== id) }));
+      try {
+        await supabase.from('certifications').delete().eq('id', id);
+      } catch (err) { console.error('Error deleting certification:', err); }
+    },
+
+    addRoadmapItem: async (item) => {
+      const newItem = { ...item, id: uid(), order: data.roadmap.length };
+      update(d => ({ ...d, roadmap: [...d.roadmap, newItem] }));
+      try {
+        await supabase.from('roadmap_items').insert(newItem);
+      } catch (err) { console.error('Error adding roadmap item:', err); }
+    },
+    updateRoadmapItem: async (id, item) => {
+      update(d => ({ ...d, roadmap: d.roadmap.map(r => r.id === id ? { ...r, ...item } : r) }));
+      try {
+        await supabase.from('roadmap_items').update(item).eq('id', id);
+      } catch (err) { console.error('Error updating roadmap item:', err); }
+    },
+    deleteRoadmapItem: async (id) => {
+      update(d => ({ ...d, roadmap: d.roadmap.filter(r => r.id !== id) }));
+      try {
+        await supabase.from('roadmap_items').delete().eq('id', id);
+      } catch (err) { console.error('Error deleting roadmap item:', err); }
+    },
+    reorderRoadmap: async (roadmap) => {
+      update(d => ({ ...d, roadmap }));
+      try {
+        await supabase.from('roadmap_items').upsert(roadmap);
+      } catch (err) { console.error('Error reordering roadmap:', err); }
+    },
+
+    addFutureProject: async (proj) => {
+      const newItem = { ...proj, id: uid(), order: data.futureProjects.length };
+      update(d => ({ ...d, futureProjects: [...d.futureProjects, newItem] }));
+      try {
+        await supabase.from('future_projects').insert(newItem);
+      } catch (err) { console.error('Error adding future project:', err); }
+    },
+    updateFutureProject: async (id, proj) => {
+      update(d => ({ ...d, futureProjects: d.futureProjects.map(p => p.id === id ? { ...p, ...proj } : p) }));
+      try {
+        await supabase.from('future_projects').update(proj).eq('id', id);
+      } catch (err) { console.error('Error updating future project:', err); }
+    },
+    deleteFutureProject: async (id) => {
+      update(d => ({ ...d, futureProjects: d.futureProjects.filter(p => p.id !== id) }));
+      try {
+        await supabase.from('future_projects').delete().eq('id', id);
+      } catch (err) { console.error('Error deleting future project:', err); }
+    },
 
     addContactMessage: (msg) => update(d => ({ ...d, contactMessages: [...d.contactMessages, { ...msg, id: uid(), date: new Date().toISOString(), resolved: false }] })),
-    deleteContactMessage: (id) => update(d => ({ ...d, contactMessages: d.contactMessages.filter(m => m.id !== id) })),
-    resolveContactMessage: (id) => update(d => ({ ...d, contactMessages: d.contactMessages.map(m => m.id === id ? { ...m, resolved: true } : m) })),
+    deleteContactMessage: async (id) => {
+      update(d => ({ ...d, contactMessages: d.contactMessages.filter(m => m.id !== id) }));
+      try {
+        await supabase.from('contact_messages').delete().eq('id', id);
+      } catch (err) { console.error('Error deleting message:', err); }
+    },
+    resolveContactMessage: async (id) => {
+      update(d => ({ ...d, contactMessages: d.contactMessages.map(m => m.id === id ? { ...m, resolved: true } : m) }));
+      try {
+        await supabase.from('contact_messages').update({ resolved: true }).eq('id', id);
+      } catch (err) { console.error('Error resolving message:', err); }
+    },
 
-    addSocialLink: (link) => update(d => ({ ...d, socialLinks: [...d.socialLinks, { ...link, id: uid(), order: d.socialLinks.length }] })),
-    updateSocialLink: (id, link) => update(d => ({ ...d, socialLinks: d.socialLinks.map(s => s.id === id ? { ...s, ...link } : s) })),
-    deleteSocialLink: (id) => update(d => ({
-      ...d,
-      socialLinks: d.socialLinks.filter(s => s.id !== id).map((s, idx) => ({ ...s, order: idx }))
-    })),
-    reorderSocialLinks: (socialLinks) => update(d => ({ ...d, socialLinks })),
-    updateSiteSettings: (siteSettings) => update(d => ({ ...d, siteSettings })),
-    updateSectionVisibility: (sectionVisibility) => update(d => ({ ...d, sectionVisibility })),
+    addSocialLink: async (link) => {
+      const newItem = { ...link, id: uid(), order: data.socialLinks.length };
+      update(d => ({ ...d, socialLinks: [...d.socialLinks, newItem] }));
+      try {
+        await supabase.from('social_links').insert(newItem);
+      } catch (err) { console.error('Error adding social link:', err); }
+    },
+    updateSocialLink: async (id, link) => {
+      update(d => ({ ...d, socialLinks: d.socialLinks.map(s => s.id === id ? { ...s, ...link } : s) }));
+      try {
+        await supabase.from('social_links').update(link).eq('id', id);
+      } catch (err) { console.error('Error updating social link:', err); }
+    },
+    deleteSocialLink: async (id) => {
+      const updated = data.socialLinks.filter(s => s.id !== id).map((s, idx) => ({ ...s, order: idx }));
+      update(d => ({ ...d, socialLinks: updated }));
+      try {
+        await supabase.from('social_links').delete().eq('id', id);
+        if (updated.length > 0) {
+          await supabase.from('social_links').upsert(updated);
+        }
+      } catch (err) { console.error('Error deleting social link:', err); }
+    },
+    reorderSocialLinks: async (socialLinks) => {
+      update(d => ({ ...d, socialLinks }));
+      try {
+        await supabase.from('social_links').upsert(socialLinks);
+      } catch (err) { console.error('Error reordering social links:', err); }
+    },
+
+    updateSiteSettings: async (settings) => {
+      update(d => ({ ...d, siteSettings: settings }));
+      try {
+        await supabase.from('portfolio_configs').upsert({ key: 'siteSettings', value: settings });
+      } catch (err) { console.error('Error saving site settings:', err); }
+    },
+    updateSectionVisibility: async (visibility) => {
+      update(d => ({ ...d, sectionVisibility: visibility }));
+      try {
+        await supabase.from('portfolio_configs').upsert({ key: 'sectionVisibility', value: visibility });
+      } catch (err) { console.error('Error saving section visibility:', err); }
+    },
     incrementVisitors: () => update(d => ({ ...d, visitors: d.visitors + 1 })),
   };
 
