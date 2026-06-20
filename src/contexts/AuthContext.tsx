@@ -82,21 +82,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Authenticate with Supabase Auth in the background to acquire RLS session token
       const email = 'aayansayyad168@gmail.com';
-      supabase.auth.signInWithPassword({ email, password }).then(({ error }) => {
+      supabase.auth.signInWithPassword({ email, password }).then(({ data, error }) => {
         if (error) {
           console.warn('Supabase Auth sign-in failed. Attempting auto-registration...', error.message);
           if (error.message.includes('Invalid login credentials') || error.message.includes('User not found')) {
             supabase.auth.signUp({ email, password }).then(({ error: signUpError }) => {
               if (signUpError) {
-                console.error('Supabase Auth auto-signup failed:', signUpError.message);
+                console.error('Supabase Auth auto-signup failed (likely user exists with a different password):', signUpError.message);
               } else {
                 console.log('Supabase Auth admin user signed up. Authenticating...');
-                supabase.auth.signInWithPassword({ email, password });
+                supabase.auth.signInWithPassword({ email, password }).then(({ error: signInAgainError }) => {
+                  if (signInAgainError) {
+                    console.error('Supabase Auth sign-in after signup failed:', signInAgainError.message);
+                  } else {
+                    console.log('Successfully authenticated with Supabase Auth after signup.');
+                  }
+                });
               }
             });
           }
         } else {
-          console.log('Successfully authenticated with Supabase Auth.');
+          console.log('Successfully authenticated with Supabase Auth. Session established:', !!data.session);
         }
       });
 

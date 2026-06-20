@@ -24,11 +24,18 @@ const ContactMessages = () => {
   const [msgs, setMsgs] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [supabaseSession, setSupabaseSession] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const fetchMessages = async () => {
     setLoading(true);
     setError('');
     try {
+      const { data: { session: activeSession } } = await supabase.auth.getSession();
+      setSupabaseSession(activeSession);
+      setAuthChecked(true);
+      console.log('Fetching messages. Active Supabase Auth Session:', activeSession ? 'Present' : 'None');
+
       const { data, error: dbError } = await supabase
         .from('contact_messages')
         .select('*')
@@ -45,6 +52,14 @@ const ContactMessages = () => {
 
   useEffect(() => {
     fetchMessages();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSupabaseSession(currentSession);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleResolve = async (id: string) => {
@@ -107,6 +122,26 @@ const ContactMessages = () => {
             {unread > 0 && <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>{unread} unread</span>}
           </h2>
         </div>
+
+        {authChecked && !supabaseSession && (
+          <div className="admin-error-banner" style={{
+            background: 'rgba(245,158,11,0.1)',
+            border: '1px solid rgba(245,158,11,0.2)',
+            borderRadius: 8,
+            padding: '0.85rem 1.1rem',
+            color: '#fbbf24',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem',
+            fontSize: '0.9rem'
+          }}>
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>
+              <strong>Warning:</strong> No active Supabase Auth session. Queries will run with the unauthenticated <code>anon</code> role and may return 0 results due to RLS policies. Please log out of the admin panel and log back in, or check if the admin user exists in your Supabase Auth dashboard and has the correct password.
+            </span>
+          </div>
+        )}
 
         {error && (
           <div className="admin-error-banner" style={{
