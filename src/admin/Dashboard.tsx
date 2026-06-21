@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import {
   Users, MessageSquare, Folder, Code2, Award, Rocket,
   TrendingUp, ArrowRight, CheckCircle, Clock, AlertCircle,
-  Eye, Shield, Map
+  Eye, Shield, Map, RotateCcw
 } from 'lucide-react';
 import '../admin/admin-shared.css';
 
@@ -26,8 +27,14 @@ const quickLinks = [
 ];
 
 const Dashboard = () => {
-  const { data } = useData();
+  const { data, resetVisitors } = useData();
   const navigate = useNavigate();
+  const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
+
+  const showToast = (message: string) => {
+    setToast({ visible: true, message });
+    setTimeout(() => setToast({ visible: false, message: '' }), 3000);
+  };
 
   const unreadMsgs = data.contactMessages.filter(m => !m.resolved).length;
   const totalMsgs  = data.contactMessages.length;
@@ -64,9 +71,40 @@ const Dashboard = () => {
               {card.key === 'messages' && unreadMsgs > 0 && (
                 <span className="badge badge-danger">{unreadMsgs} new</span>
               )}
+              {card.key === 'visitors' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm('Are you sure you want to reset the visitor count to 0?')) {
+                      resetVisitors(() => showToast('Visitor count reset successfully.'));
+                    }
+                  }}
+                  title="Reset Visitors"
+                  aria-label="Reset Visitors"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#9090b0',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#9090b0'}
+                >
+                  <RotateCcw size={14} />
+                </button>
+              )}
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 700, color: '#e8e8f0', lineHeight: 1 }}>
-              {statValues[card.key]}
+              {card.key === 'visitors'
+                ? new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(statValues[card.key])
+                : statValues[card.key]
+              }
             </div>
             <div style={{ fontSize: '0.78rem', color: '#9090b0', marginTop: '0.35rem' }}>{card.label}</div>
           </div>
@@ -178,6 +216,30 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
+
+      {/* Success Toast */}
+      {toast.visible && (
+        <div style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.6rem',
+          padding: '0.85rem 1.25rem',
+          background: 'linear-gradient(135deg, #0d9e6e, #0b8a5e)',
+          color: '#fff',
+          borderRadius: '10px',
+          fontSize: '0.9rem',
+          fontWeight: 500,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          animation: 'fadeInUp 0.25s ease',
+        }}>
+          <CheckCircle size={18} />
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };

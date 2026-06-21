@@ -64,7 +64,7 @@ const CertificationsManager = () => {
                 </div>
                 <div className="list-item-actions">
                   <button className="btn-admin-icon edit" onClick={() => openEdit(cert)}><Pencil size={14} /></button>
-                  <button className="btn-admin-icon danger" onClick={() => deleteCertification(cert.id)}><Trash2 size={14} /></button>
+                  <button className="btn-admin-icon danger" onClick={() => { if (window.confirm('Are you sure you want to delete this certification?')) deleteCertification(cert.id); }}><Trash2 size={14} /></button>
                 </div>
               </div>
             ))}

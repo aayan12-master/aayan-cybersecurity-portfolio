@@ -77,3 +77,15 @@
 .project-link:hover {
   color: var(--color-accent);
 }
+
+@media (max-width: 768px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+  .project-card {
+    padding: var(--spacing-md);
+    min-height: auto;
+  }
+}

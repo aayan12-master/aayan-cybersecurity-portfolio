@@ -81,7 +81,7 @@ const SkillsManager = () => {
                     </div>
                     <div className="list-item-actions">
                       <button className="btn-admin-icon edit" onClick={() => openEdit(skill)} title="Edit"><Pencil size={14} /></button>
-                      <button className="btn-admin-icon danger" onClick={() => deleteSkill(skill.id)} title="Delete"><Trash2 size={14} /></button>
+                      <button className="btn-admin-icon danger" onClick={() => { if (window.confirm('Are you sure you want to delete this skill?')) deleteSkill(skill.id); }} title="Delete"><Trash2 size={14} /></button>
                     </div>
                   </div>
                 );

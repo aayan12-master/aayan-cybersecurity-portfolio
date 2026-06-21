@@ -140,7 +140,7 @@ const SocialLinksEditor = () => {
                       <ArrowDown size={14} />
                     </button>
                     <button type="button" className="btn-admin-icon edit" onClick={() => openEdit(link)} title="Edit"><Pencil size={14} /></button>
-                    <button type="button" className="btn-admin-icon danger" onClick={() => deleteSocialLink(link.id)} title="Delete"><Trash2 size={14} /></button>
+                    <button type="button" className="btn-admin-icon danger" onClick={() => { if (window.confirm('Are you sure you want to delete this social link?')) deleteSocialLink(link.id); }} title="Delete"><Trash2 size={14} /></button>
                   </div>
                 </div>
               </div>

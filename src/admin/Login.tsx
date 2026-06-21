@@ -5,7 +5,7 @@ import { Shield, User, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-
 import './Login.css';
 
 const Login = () => {
-  const { login, isLockedOut, lockoutRemainingMs, remainingAttempts } = useAuth();
+  const { isAuthenticated, login, isLockedOut, lockoutRemainingMs, remainingAttempts } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -15,17 +15,28 @@ const Login = () => {
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
     if (isLockedOut && lockoutRemainingMs > 0) {
-      const interval = setInterval(() => {
-        const remaining = lockoutRemainingMs - Date.now();
+      const targetTime = Date.now() + lockoutRemainingMs;
+      const updateTimer = () => {
+        const remaining = targetTime - Date.now();
         if (remaining <= 0) {
           setCountdown('');
-          clearInterval(interval);
         } else {
-          const mins = Math.ceil(remaining / 60000);
-          setCountdown(`${mins} min`);
+          const totalSecs = Math.ceil(remaining / 1000);
+          const mins = Math.floor(totalSecs / 60);
+          const secs = totalSecs % 60;
+          setCountdown(`${mins}:${secs.toString().padStart(2, '0')} min`);
         }
-      }, 1000);
+      };
+
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
       return () => clearInterval(interval);
     }
   }, [isLockedOut, lockoutRemainingMs]);

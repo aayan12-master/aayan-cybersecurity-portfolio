@@ -296,7 +296,7 @@ const DEFAULT_DATA: SiteData = {
   siteSettings: {
     seoTitle: 'Aayan G. Sayyad | Cyber Security Student & Enthusiast',
     metaDescription: 'Portfolio of Aayan G. Sayyad – Cyber Security Student, Enthusiast, and aspiring security professional from India.',
-    ogImage: '',
+    ogImage: 'https://aayansayyad.com/og-image.png',
     analyticsId: '',
   },
   sectionVisibility: {
@@ -348,6 +348,7 @@ interface DataContextType {
   updateSiteSettings: (settings: SiteSettings) => void;
   updateSectionVisibility: (visibility: SectionVisibility) => void;
   incrementVisitors: () => void;
+  resetVisitors: (onSuccess?: () => void) => void;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -550,6 +551,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         let about = DEFAULT_DATA.about;
         let siteSettings = DEFAULT_DATA.siteSettings;
         let sectionVisibility = DEFAULT_DATA.sectionVisibility;
+        let visitors = DEFAULT_DATA.visitors;
 
         if (configsRes.data && configsRes.data.length > 0) {
           configsRes.data.forEach((row: any) => {
@@ -576,6 +578,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             }
             else if (row.key === 'siteSettings') siteSettings = row.value;
             else if (row.key === 'sectionVisibility') sectionVisibility = row.value;
+            else if (row.key === 'visitors') {
+              visitors = typeof row.value === 'object' && row.value !== null && 'count' in row.value
+                ? Number(row.value.count)
+                : Number(row.value) || 0;
+            }
           });
         }
 
@@ -627,7 +634,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           roadmap,
           futureProjects,
           socialLinks,
-          contactMessages
+          contactMessages,
+          visitors: visitors !== undefined ? visitors : prev.visitors
         }));
         console.log('Context successfully hydrated from Supabase.');
       } catch (err) {
@@ -1023,7 +1031,29 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         console.error(`[Supabase Exception] Table: ${tableName}`, err);
       }
     },
-    incrementVisitors: () => update(d => ({ ...d, visitors: d.visitors + 1 })),
+    incrementVisitors: async () => {
+      update(d => {
+        const newCount = d.visitors + 1;
+        const payload = { key: 'visitors', value: { count: newCount } };
+        supabase.from('portfolio_configs').upsert(payload).then(res => {
+          console.log(`[Supabase Write] incrementVisitors`, { status: res.status, error: res.error });
+        });
+        return { ...d, visitors: newCount };
+      });
+    },
+    resetVisitors: async (onSuccess) => {
+      update(d => ({ ...d, visitors: 0 }));
+      const payload = { key: 'visitors', value: { count: 0 } };
+      try {
+        const res = await supabase.from('portfolio_configs').upsert(payload);
+        console.log(`[Supabase Write] resetVisitors`, { status: res.status, error: res.error });
+        if (!res.error) {
+          onSuccess?.();
+        }
+      } catch (err) {
+        console.error(`[Supabase Exception] resetVisitors`, err);
+      }
+    },
   };
 
   return <DataContext.Provider value={ctx}>{children}</DataContext.Provider>;

@@ -70,7 +70,7 @@ const ServicesManager = () => {
                   <span className="badge badge-muted">{service.iconName}</span>
                   <div className="list-item-actions">
                     <button className="btn-admin-icon edit" onClick={() => openEdit(service)} title="Edit"><Pencil size={14} /></button>
-                    <button className="btn-admin-icon danger" onClick={() => deleteService(service.id)} title="Delete"><Trash2 size={14} /></button>
+                    <button className="btn-admin-icon danger" onClick={() => { if (window.confirm('Are you sure you want to delete this service?')) deleteService(service.id); }} title="Delete"><Trash2 size={14} /></button>
                   </div>
                 </div>
               </div>

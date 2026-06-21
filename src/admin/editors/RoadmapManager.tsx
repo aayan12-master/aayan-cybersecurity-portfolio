@@ -70,7 +70,7 @@ const RoadmapManager = () => {
                   </div>
                   <div className="list-item-actions">
                     <button className="btn-admin-icon edit" onClick={() => openEdit(item)}><Pencil size={14} /></button>
-                    <button className="btn-admin-icon danger" onClick={() => deleteRoadmapItem(item.id)}><Trash2 size={14} /></button>
+                    <button className="btn-admin-icon danger" onClick={() => { if (window.confirm('Are you sure you want to delete this roadmap item?')) deleteRoadmapItem(item.id); }}><Trash2 size={14} /></button>
                   </div>
                 </div>
               );
