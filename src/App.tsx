@@ -22,6 +22,8 @@ const ContactMessages = lazy(() => import('./admin/editors/ContactMessages'));
 const SocialLinksEditor = lazy(() => import('./admin/editors/SocialLinksEditor'));
 const SiteSettingsEditor = lazy(() => import('./admin/editors/SiteSettingsEditor'));
 const SectionVisibilityEditor = lazy(() => import('./admin/editors/SectionVisibilityEditor'));
+const ResetPassword = lazy(() => import('./admin/ResetPassword'));
+const UpdatePassword = lazy(() => import('./admin/UpdatePassword'));
 
 const AdminFallback = () => (
   <div style={{
@@ -74,6 +76,24 @@ function App() {
               element={
                 <Suspense fallback={<AdminFallback />}>
                   <Login />
+                </Suspense>
+              }
+            />
+
+            <Route
+              path="/admin/reset-password"
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <ResetPassword />
+                </Suspense>
+              }
+            />
+
+            <Route
+              path="/admin/update-password"
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <UpdatePassword />
                 </Suspense>
               }
             />
