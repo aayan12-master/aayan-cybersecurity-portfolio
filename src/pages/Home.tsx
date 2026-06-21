@@ -29,6 +29,18 @@ const Home = () => {
   // Dynamically update SEO metadata from Supabase
   useEffect(() => {
     const settings = data.siteSettings;
+    const currentOrigin = window.location.origin;
+
+    // Dynamically update canonical link and social URLs based on current host origin
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', currentOrigin + '/');
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', currentOrigin + '/');
+
+    const twitterUrl = document.querySelector('meta[name="twitter:url"]');
+    if (twitterUrl) twitterUrl.setAttribute('content', currentOrigin + '/');
+
     if (settings.seoTitle) {
       document.title = settings.seoTitle;
       const ogTitle = document.querySelector('meta[property="og:title"]');
@@ -44,12 +56,13 @@ const Home = () => {
       const twitterDesc = document.querySelector('meta[name="twitter:description"]');
       if (twitterDesc) twitterDesc.setAttribute('content', settings.metaDescription);
     }
-    if (settings.ogImage) {
-      const ogImg = document.querySelector('meta[property="og:image"]');
-      if (ogImg) ogImg.setAttribute('content', settings.ogImage);
-      const twitterImg = document.querySelector('meta[name="twitter:image"]');
-      if (twitterImg) twitterImg.setAttribute('content', settings.ogImage);
-    }
+
+    // Fallback to origin-absolute path if settings.ogImage is empty/unconfigured
+    const targetOgImage = settings.ogImage || (currentOrigin + '/og-image.png');
+    const ogImg = document.querySelector('meta[property="og:image"]');
+    if (ogImg) ogImg.setAttribute('content', targetOgImage);
+    const twitterImg = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImg) twitterImg.setAttribute('content', targetOgImage);
   }, [data.siteSettings]);
 
   return (

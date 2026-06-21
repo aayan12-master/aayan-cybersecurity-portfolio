@@ -294,9 +294,9 @@ const DEFAULT_DATA: SiteData = {
     { id: uid(), platform: 'X', url: 'https://x.com/AayanS36903', order: 2 },
   ],
   siteSettings: {
-    seoTitle: 'Aayan G. Sayyad | Cyber Security Student & Enthusiast',
-    metaDescription: 'Portfolio of Aayan G. Sayyad – Cyber Security Student, Enthusiast, and aspiring security professional from India.',
-    ogImage: 'https://aayansayyad.com/og-image.png',
+    seoTitle: 'Aayan G. Sayyad | Cyber Security Enthusiast',
+    metaDescription: 'Exploring how technology works, how systems break, and how to make them more secure.',
+    ogImage: 'https://agsportfolio.vercel.app/og-image.png',
     analyticsId: '',
   },
   sectionVisibility: {
