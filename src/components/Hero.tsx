@@ -74,7 +74,7 @@ const Hero = () => {
       >
         <div className="portrait-container">
           <div className="portrait-bg"></div>
-          <img src={portraitImg} alt={hero.name} className="portrait-image" />
+          <img src={hero.profilePhotoUrl?.trim() || portraitImg} alt={hero.name} className="portrait-image" />
         </div>
       </motion.div>
 

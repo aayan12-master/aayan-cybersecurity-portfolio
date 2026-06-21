@@ -1,14 +1,84 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Save, User, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Save, User, CheckCircle, Eye, EyeOff, Upload, Loader, AlertCircle } from 'lucide-react';
+import { supabase } from '../../utils/supabaseClient';
 import '../admin-shared.css';
 
 const HeroEditor = () => {
   const { data, updateHero } = useData();
   const [form, setForm] = useState({ ...data.hero });
   const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState('');
 
   const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }));
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError('');
+    setUploadSuccess('');
+
+    // 1. Validation: File extension (.jpg, .jpeg, .png, .webp)
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+      setUploadError('Invalid file type. Only .jpg, .jpeg, .png, and .webp images are allowed.');
+      return;
+    }
+
+    // 2. Validation: Maximum size (5 MB)
+    const maxSizeInBytes = 5 * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      setUploadError('File size exceeds the 5 MB limit.');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // 3. Delete previous file if it exists and was uploaded to Supabase Storage
+      const currentUrl = form.profilePhotoUrl;
+      if (currentUrl && currentUrl.includes('portfolio-assets')) {
+        try {
+          const urlParts = currentUrl.split('/');
+          const oldFilename = urlParts[urlParts.length - 1];
+          if (oldFilename) {
+            await supabase.storage.from('portfolio-assets').remove([oldFilename]);
+            console.log('[Supabase Storage] Deleted old profile image:', oldFilename);
+          }
+        } catch (err) {
+          console.error('[Supabase Storage Exception] Failed to clean up old image:', err);
+        }
+      }
+
+      // 4. Upload the new file
+      const newFilename = `profile-${Date.now()}.${fileExtension}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('portfolio-assets')
+        .upload(newFilename, file, { cacheControl: '3600', upsert: true });
+
+      if (uploadErr) {
+        setUploadError(`Upload failed: ${uploadErr.message}`);
+        return;
+      }
+
+      // 5. Get Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio-assets')
+        .getPublicUrl(newFilename);
+
+      // 6. Update local form state (previews before saving)
+      setForm(f => ({ ...f, profilePhotoUrl: publicUrl }));
+      setUploadSuccess('Profile photo uploaded successfully!');
+    } catch (err: any) {
+      setUploadError(err.message || 'An unexpected error occurred during upload.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,6 +212,103 @@ const HeroEditor = () => {
                 : <><EyeOff size={15} /> Hidden (On Homepage)</>
               }
             </button>
+          </div>
+
+          <div className="form-group" style={{ borderTop: '1px solid var(--a-border)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+            <label>Profile Picture</label>
+            
+            {/* Current Photo Preview */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid var(--a-border)',
+                background: '#0b0b10',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {form.profilePhotoUrl ? (
+                  <img
+                    src={form.profilePhotoUrl}
+                    alt="Profile Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--a-text-muted)' }}>No Photo</span>
+                )}
+              </div>
+              
+              {/* Upload Action */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label className="btn-admin-primary" style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  cursor: uploading ? 'not-allowed' : 'pointer',
+                  fontSize: '0.85rem',
+                  margin: 0,
+                  width: 'fit-content'
+                }}>
+                  {uploading ? (
+                    <><Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> Uploading...</>
+                  ) : (
+                    <><Upload size={15} /> Choose Photo</>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg, image/png, image/webp"
+                    onChange={handleFileChange}
+                    disabled={uploading}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                <span style={{ fontSize: '0.75rem', color: 'var(--a-text-muted)' }}>
+                  Supports JPEG, PNG, WEBP. Max size 5 MB.
+                </span>
+              </div>
+            </div>
+
+            {uploadError && (
+              <div className="login-error" style={{ marginBottom: '1rem' }}>
+                <AlertCircle size={15} aria-hidden="true" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+
+            {uploadSuccess && (
+              <div style={{
+                background: 'rgba(74, 222, 128, 0.08)',
+                border: '1px solid rgba(74, 222, 128, 0.2)',
+                borderRadius: '8px',
+                padding: '0.7rem 0.9rem',
+                color: '#4ade80',
+                fontSize: '0.84rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '1rem'
+              }}>
+                <CheckCircle size={15} aria-hidden="true" />
+                <span>{uploadSuccess}</span>
+              </div>
+            )}
+            
+            {/* Raw Photo URL Input (for fallback/manual control) */}
+            <div className="form-group" style={{ marginTop: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--a-text-sec)' }}>Raw Photo URL (Optional)</label>
+              <input
+                type="text"
+                value={form.profilePhotoUrl || ''}
+                onChange={e => setForm(f => ({ ...f, profilePhotoUrl: e.target.value }))}
+                placeholder="Auto-filled on upload, or paste custom address"
+                disabled={uploading}
+              />
+            </div>
           </div>
 
           <div className="admin-save-bar">
