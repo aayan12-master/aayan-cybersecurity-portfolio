@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  LayoutDashboard, User, GraduationCap, Briefcase, Code2, Folder,
+  LayoutDashboard, User, Code2, Folder,
   Award, Map, Rocket, MessageSquare, Share2, Settings, LogOut,
   Shield, ChevronLeft, Menu, Eye, BookOpen
 } from 'lucide-react';
@@ -20,8 +20,6 @@ const navGroups = [
     items: [
       { to: '/admin/hero', icon: User, label: 'Hero Section' },
       { to: '/admin/about', icon: BookOpen, label: 'About' },
-      { to: '/admin/education', icon: GraduationCap, label: 'Education' },
-      { to: '/admin/training', icon: Briefcase, label: 'Training' },
       { to: '/admin/skills', icon: Code2, label: 'Skills' },
       { to: '/admin/services', icon: Shield, label: 'Services' },
       { to: '/admin/projects', icon: Folder, label: 'Projects' },

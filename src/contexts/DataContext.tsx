@@ -24,20 +24,6 @@ export interface AboutContent {
   missionStatement: string;
 }
 
-export interface Education {
-  degree: string;
-  college: string;
-  completionYear: string;
-}
-
-export interface Training {
-  institute: string;
-  location: string;
-  duration: string;
-  mode: string;
-  status: string;
-}
-
 export interface Skill {
   id: string;
   name: string;
@@ -128,8 +114,6 @@ export interface SiteSettings {
 export interface SectionVisibility {
   hero: boolean;
   about: boolean;
-  education: boolean;
-  training: boolean;
   skills: boolean;
   services: boolean;
   projects: boolean;
@@ -142,8 +126,6 @@ export interface SectionVisibility {
 export interface SiteData {
   hero: HeroContent;
   about: AboutContent;
-  education: Education;
-  training: Training;
   skills: Skill[];
   services: Service[];
   projects: Project[];
@@ -241,18 +223,6 @@ const DEFAULT_DATA: SiteData = {
     missionStatement:
       'To continuously learn, grow, and contribute meaningful solutions to the cybersecurity industry while helping make digital spaces safer for everyone.',
   },
-  education: {
-    degree: 'Bachelor of Science (B.Sc.) in Computer Science',
-    college: 'Marutraoji Ghule Patil College',
-    completionYear: '2026',
-  },
-  training: {
-    institute: 'Skill Rise Academy',
-    location: 'Hyderabad, Telangana, India',
-    duration: '7-8 Months',
-    mode: 'Offline Classroom Training',
-    status: 'Ongoing',
-  },
   skills: [
     { id: uid(), name: 'Networking', category: 'Foundation', level: 60, order: 0 },
     { id: uid(), name: 'Linux', category: 'Operating Systems', level: 55, order: 1 },
@@ -308,8 +278,6 @@ const DEFAULT_DATA: SiteData = {
   sectionVisibility: {
     hero: true,
     about: true,
-    education: true,
-    training: true,
     skills: true,
     services: true,
     projects: true,
@@ -326,8 +294,6 @@ interface DataContextType {
   data: SiteData;
   updateHero: (hero: HeroContent) => void;
   updateAbout: (about: AboutContent) => void;
-  updateEducation: (edu: Education) => void;
-  updateTraining: (training: Training) => void;
   addSkill: (skill: Omit<Skill, 'id' | 'order'>) => void;
   updateSkill: (id: string, skill: Partial<Skill>) => void;
   deleteSkill: (id: string) => void;
@@ -404,8 +370,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           ...parsed,
           hero: { ...DEFAULT_DATA.hero, ...parsed.hero },
           about: { ...DEFAULT_DATA.about, ...parsed.about },
-          education: { ...DEFAULT_DATA.education, ...parsed.education },
-          training: { ...DEFAULT_DATA.training, ...parsed.training },
           socialLinks: migratedSocialLinks,
           siteSettings: { ...DEFAULT_DATA.siteSettings, ...parsed.siteSettings },
           sectionVisibility: { ...DEFAULT_DATA.sectionVisibility, ...parsed.sectionVisibility },
@@ -429,8 +393,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       const requiredConfigs = [
         { key: 'hero', value: DEFAULT_DATA.hero },
         { key: 'about', value: DEFAULT_DATA.about },
-        { key: 'education', value: DEFAULT_DATA.education },
-        { key: 'training', value: DEFAULT_DATA.training },
         { key: 'siteSettings', value: DEFAULT_DATA.siteSettings },
         { key: 'sectionVisibility', value: DEFAULT_DATA.sectionVisibility }
       ];
@@ -552,8 +514,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         // Parse configurations
         let hero = DEFAULT_DATA.hero;
         let about = DEFAULT_DATA.about;
-        let education = DEFAULT_DATA.education;
-        let training = DEFAULT_DATA.training;
         let siteSettings = DEFAULT_DATA.siteSettings;
         let sectionVisibility = DEFAULT_DATA.sectionVisibility;
 
@@ -571,8 +531,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
               };
             }
             else if (row.key === 'about') about = row.value;
-            else if (row.key === 'education') education = row.value;
-            else if (row.key === 'training') training = row.value;
             else if (row.key === 'siteSettings') siteSettings = row.value;
             else if (row.key === 'sectionVisibility') sectionVisibility = row.value;
           });
@@ -615,8 +573,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           ...prev,
           hero,
           about,
-          education,
-          training,
           siteSettings,
           sectionVisibility,
           skills,
@@ -663,28 +619,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         console.error(`[Supabase Exception] Table: ${tableName}`, err);
       }
     },
-    updateEducation: async (edu) => {
-      update(d => ({ ...d, education: edu }));
-      const tableName = 'portfolio_configs';
-      const payload = { key: 'education', value: edu };
-      try {
-        const res = await supabase.from(tableName).upsert(payload);
-        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
-      } catch (err: any) {
-        console.error(`[Supabase Exception] Table: ${tableName}`, err);
-      }
-    },
-    updateTraining: async (training) => {
-      update(d => ({ ...d, training }));
-      const tableName = 'portfolio_configs';
-      const payload = { key: 'training', value: training };
-      try {
-        const res = await supabase.from(tableName).upsert(payload);
-        console.log(`[Supabase Write] Table: ${tableName}`, { payload, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
-      } catch (err: any) {
-        console.error(`[Supabase Exception] Table: ${tableName}`, err);
-      }
-    },
+
 
     addSkill: async (skill) => {
       const newItem = { ...skill, id: uid(), order: data.skills.length };

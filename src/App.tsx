@@ -12,8 +12,6 @@ const AdminLayout = lazy(() => import('./admin/AdminLayout'));
 const Dashboard = lazy(() => import('./admin/Dashboard'));
 const HeroEditor = lazy(() => import('./admin/editors/HeroEditor'));
 const AboutEditor = lazy(() => import('./admin/editors/AboutEditor'));
-const EducationEditor = lazy(() => import('./admin/editors/EducationEditor'));
-const TrainingEditor = lazy(() => import('./admin/editors/TrainingEditor'));
 const SkillsManager = lazy(() => import('./admin/editors/SkillsManager'));
 const ServicesManager = lazy(() => import('./admin/editors/ServicesManager'));
 const ProjectsManager = lazy(() => import('./admin/editors/ProjectsManager'));
@@ -97,8 +95,6 @@ function App() {
               <Route path="dashboard"      element={<Dashboard />} />
               <Route path="hero"           element={<HeroEditor />} />
               <Route path="about"          element={<AboutEditor />} />
-              <Route path="education"      element={<EducationEditor />} />
-              <Route path="training"       element={<TrainingEditor />} />
               <Route path="skills"         element={<SkillsManager />} />
               <Route path="services"       element={<ServicesManager />} />
               <Route path="projects"       element={<ProjectsManager />} />

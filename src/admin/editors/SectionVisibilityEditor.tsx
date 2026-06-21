@@ -6,8 +6,6 @@ import '../admin-shared.css';
 const SECTIONS: { key: keyof SectionVisibility; label: string; desc: string }[] = [
   { key: 'hero', label: 'Hero Section', desc: 'Main banner with name, title and photo.' },
   { key: 'about', label: 'About', desc: 'Bio, career goal and mission statement.' },
-  { key: 'education', label: 'Education', desc: 'Academic degree and college info.' },
-  { key: 'training', label: 'Training', desc: 'Cyber security training program details.' },
   { key: 'skills', label: 'Skills', desc: 'Skill bars and categories.' },
   { key: 'services', label: 'Services', desc: 'Services you offer.' },
   { key: 'projects', label: 'Projects', desc: 'Featured work and code projects.' },
