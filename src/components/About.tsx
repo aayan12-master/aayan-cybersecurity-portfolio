@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ShieldCheck, Target, Lightbulb } from 'lucide-react';
+import { ShieldCheck, Target, Lightbulb, Download } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import './About.css';
 
@@ -22,6 +22,19 @@ const About = () => {
           {bioParagraphs.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
+          {data.hero.showResumeButton && data.hero.resumeUrl?.trim() && (
+            <div className="about-resume-container flex justify-center">
+              <a
+                href={data.hero.resumeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="about-resume-btn flex items-center gap-xs"
+              >
+                <Download size={18} aria-hidden="true" />
+                <span>{data.hero.resumeButtonText || 'Download Resume'}</span>
+              </a>
+            </div>
+          )}
         </div>
       </div>
 

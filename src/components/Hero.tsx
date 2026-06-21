@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Mail, Award, Hexagon, Box, Bug, Terminal, Globe } from 'lucide-react';
+import { Mail, Award, Hexagon, Box, Bug, Terminal, Globe, Download } from 'lucide-react';
 import { FaGithub, FaXTwitter, FaLinkedin, FaInstagram, FaFacebook, FaYoutube, FaDiscord, FaTelegram, FaGitlab, FaMedium } from 'react-icons/fa6';
 import { useData } from '../contexts/DataContext';
 import { sanitizeUrl } from '../utils/sanitize';
@@ -56,6 +56,20 @@ const Hero = () => {
           <Mail className="text-secondary" size={20} aria-hidden="true" />
           <a href={`mailto:${hero.email}`} className="email-link">{hero.email}</a>
         </div>
+
+        {hero.showResumeButton && hero.resumeUrl?.trim() && (
+          <div className="hero-resume-container">
+            <a
+              href={hero.resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hero-resume-btn flex items-center gap-xs"
+            >
+              <Download size={18} aria-hidden="true" />
+              <span>{hero.resumeButtonText || 'Download Resume'}</span>
+            </a>
+          </div>
+        )}
 
         <div className="learning-counter">
           <span className="counter-number text-accent">{hero.heroStatValue || '2-3'}</span>

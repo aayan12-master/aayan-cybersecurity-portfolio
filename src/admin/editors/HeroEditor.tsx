@@ -102,6 +102,48 @@ const HeroEditor = () => {
             </button>
           </div>
 
+          <div className="form-row">
+            <div className="form-group">
+              <label>Resume / CV URL</label>
+              <input
+                type="text"
+                value={form.resumeUrl || ''}
+                onChange={e => set('resumeUrl', e.target.value)}
+                placeholder="Google Drive, Dropbox, Supabase, or /Aayan_Sayyad_Resume.pdf"
+              />
+            </div>
+            <div className="form-group">
+              <label>Resume Button Text</label>
+              <input
+                value={form.resumeButtonText || ''}
+                onChange={e => set('resumeButtonText', e.target.value)}
+                placeholder="Download Resume"
+              />
+            </div>
+          </div>
+
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <label>Resume Button Visibility</label>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, showResumeButton: !f.showResumeButton }))}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                background: form.showResumeButton ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.08)',
+                border: `1px solid ${form.showResumeButton ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.2)'}`,
+                color: form.showResumeButton ? '#4ade80' : '#f87171',
+                borderRadius: 8, padding: '0.5rem 1rem', cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.85rem',
+                transition: 'all 0.2s', width: 'fit-content'
+              }}
+            >
+              {form.showResumeButton
+                ? <><Eye size={15} /> Visible (On Homepage)</>
+                : <><EyeOff size={15} /> Hidden (On Homepage)</>
+              }
+            </button>
+          </div>
+
           <div className="admin-save-bar">
             {saved && (
               <span className="save-success"><CheckCircle size={15} /> Saved successfully!</span>

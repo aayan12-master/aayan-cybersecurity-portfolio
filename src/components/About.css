@@ -68,3 +68,35 @@
 }
 .about-bio { text-align: left; max-width: 800px; margin: 0 auto; font-size: 1.1rem; line-height: 1.8; display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; } 
 .mt-lg { margin-top: 3rem; } 
+
+.about-resume-container {
+  margin-top: var(--spacing-sm);
+}
+
+.about-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  width: fit-content;
+}
+
+.about-resume-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.about-resume-btn svg {
+  flex-shrink: 0;
+} 

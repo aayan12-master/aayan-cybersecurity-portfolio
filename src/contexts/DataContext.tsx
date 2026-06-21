@@ -15,6 +15,9 @@ export interface HeroContent {
   badgeTitle: string;
   badgeSubtitle: string;
   showProfileBadge: boolean;
+  resumeUrl: string;
+  showResumeButton: boolean;
+  resumeButtonText: string;
 }
 
 export interface AboutContent {
@@ -214,6 +217,9 @@ const DEFAULT_DATA: SiteData = {
     badgeTitle: 'Training',
     badgeSubtitle: 'Skill Rise Academy',
     showProfileBadge: true,
+    resumeUrl: '',
+    showResumeButton: false,
+    resumeButtonText: 'Download Resume',
   },
   about: {
     heading: 'About Me',
@@ -527,7 +533,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 heroStatLabel: row.value.heroStatLabel || 'Hours Daily Learning Journey',
                 badgeTitle: row.value.badgeTitle || 'Training',
                 badgeSubtitle: row.value.badgeSubtitle || row.value.trainingBadge || 'Skill Rise Academy',
-                showProfileBadge: row.value.showProfileBadge !== undefined ? row.value.showProfileBadge : true
+                showProfileBadge: row.value.showProfileBadge !== undefined ? row.value.showProfileBadge : true,
+                resumeUrl: row.value.resumeUrl !== undefined ? row.value.resumeUrl : '',
+                showResumeButton: row.value.showResumeButton !== undefined ? row.value.showResumeButton : false,
+                resumeButtonText: row.value.resumeButtonText || 'Download Resume'
               };
             }
             else if (row.key === 'about') about = row.value;
