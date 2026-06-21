@@ -11,6 +11,8 @@ const About = () => {
     <section id="about" className="about section container">
       <div className="about-header text-center flex-col items-center">
         <h2 className="section-title">{about.heading}</h2>
+      </div>
+      <div className="about-content">
         <div className="about-bio text-secondary">
           {bioParagraphs.map((p, i) => (
             <p key={i}>{p}</p>
