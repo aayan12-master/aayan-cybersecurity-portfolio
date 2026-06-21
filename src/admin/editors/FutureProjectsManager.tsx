@@ -3,8 +3,25 @@ import { useData, type FutureProject } from '../../contexts/DataContext';
 import { Plus, Pencil, Trash2, Rocket, X, Save } from 'lucide-react';
 import '../admin-shared.css';
 
-const STATUSES = ['Planned', 'In Design', 'In Development', 'Beta', 'Launched'];
-const empty: Omit<FutureProject, 'id' | 'order'> = { title: '', description: '', status: 'Planned', progress: 0 };
+const STAGES = ['Researching', 'Planning', 'Building', 'Testing', 'Launching'];
+
+const STAGE_PROGRESS_MAP: Record<string, number> = {
+  'Researching': 20,
+  'Planning': 40,
+  'Building': 60,
+  'Testing': 80,
+  'Launching': 100
+};
+
+const STAGE_STYLE: Record<string, React.CSSProperties> = {
+  'Researching': { backgroundColor: 'rgba(148, 163, 184, 0.1)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.2)' },
+  'Planning': { backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#60a5fa', border: '1px solid rgba(56, 189, 248, 0.2)' },
+  'Building': { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.2)' },
+  'Testing': { backgroundColor: 'rgba(236, 72, 153, 0.1)', color: '#f472b6', border: '1px solid rgba(236, 72, 153, 0.2)' },
+  'Launching': { backgroundColor: 'rgba(74, 222, 128, 0.1)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.2)' }
+};
+
+const empty: Omit<FutureProject, 'id' | 'order'> = { title: '', description: '', status: 'Researching', progress: 20 };
 
 const FutureProjectsManager = () => {
   const { data, addFutureProject, updateFutureProject, deleteFutureProject } = useData();
@@ -28,16 +45,11 @@ const FutureProjectsManager = () => {
     close();
   };
 
-  const statusColor: Record<string, string> = {
-    'Planned': 'badge-muted', 'In Design': 'badge-info', 'In Development': 'badge-warning',
-    'Beta': 'badge-success', 'Launched': 'badge-success'
-  };
-
   return (
     <div>
       <div className="admin-page-header">
         <h1>Future Projects</h1>
-        <p>Showcase upcoming projects with progress and status.</p>
+        <p>Showcase upcoming projects with stages and status.</p>
       </div>
 
       <div className="admin-card">
@@ -55,12 +67,10 @@ const FutureProjectsManager = () => {
                 <div className="list-item-info">
                   <h3>{proj.title}</h3>
                   <p style={{ marginBottom: '0.5rem' }}>{proj.description}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className={`badge ${statusColor[proj.status] || 'badge-muted'}`}>{proj.status}</span>
-                    <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, maxWidth: 140 }}>
-                      <div style={{ width: `${proj.progress}%`, height: '100%', background: '#7c6ff7', borderRadius: 2 }} />
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: '#9090b0' }}>{proj.progress}%</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="badge" style={STAGE_STYLE[proj.status] || STAGE_STYLE['Researching']}>
+                      {proj.status}
+                    </span>
                   </div>
                 </div>
                 <div className="list-item-actions">
@@ -89,19 +99,17 @@ const FutureProjectsManager = () => {
                 <label>Description</label>
                 <textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Status</label>
-                  <select value={form.status} onChange={e => set('status', e.target.value)}>
-                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Progress: <strong style={{ color: '#7c6ff7' }}>{form.progress}%</strong></label>
-                  <input type="range" min={0} max={100} value={form.progress}
-                    onChange={e => set('progress', Number(e.target.value))}
-                    style={{ width: '100%', accentColor: '#7c6ff7', marginTop: '0.5rem' }} />
-                </div>
+              <div className="form-group">
+                <label>Project Stage</label>
+                <select 
+                  value={form.status} 
+                  onChange={e => {
+                    const stage = e.target.value;
+                    setForm(f => ({ ...f, status: stage, progress: STAGE_PROGRESS_MAP[stage] || 20 }));
+                  }}
+                >
+                  {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-admin-secondary" onClick={close}>Cancel</button>

@@ -43,12 +43,47 @@
   position: absolute;
   bottom: var(--spacing-md);
   left: var(--spacing-lg);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  background-color: rgba(15, 23, 42, 0.05);
+  letter-spacing: 0.5px;
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: 20px;
+}
+
+/* Stage color schemes */
+.stage-researching {
+  background-color: rgba(148, 163, 184, 0.1);
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.stage-planning {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #0284c7;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.stage-building {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.stage-testing {
+  background-color: rgba(236, 72, 153, 0.1);
+  color: #be184d;
+  border: 1px solid rgba(236, 72, 153, 0.2);
+}
+
+.stage-launching {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.stage-default {
+  background-color: rgba(15, 23, 42, 0.05);
   color: var(--color-text-secondary);
+  border: 1px solid rgba(15, 23, 42, 0.1);
 }

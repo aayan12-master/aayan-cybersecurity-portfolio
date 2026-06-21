@@ -25,6 +25,22 @@ const CATEGORIES = [
   'Other'
 ];
 
+export const COMPETENCY_MAP = [
+  { label: 'Foundation', value: 15, className: 'comp-foundation' },
+  { label: 'Learning', value: 35, className: 'comp-learning' },
+  { label: 'Practicing', value: 55, className: 'comp-practicing' },
+  { label: 'Hands-On', value: 75, className: 'comp-handson' },
+  { label: 'Building', value: 90, className: 'comp-building' },
+  { label: 'Active', value: 100, className: 'comp-active' }
+];
+
+export const getCompetency = (level: number) => {
+  if (!level) return COMPETENCY_MAP[0];
+  return COMPETENCY_MAP.reduce((prev, curr) => 
+    Math.abs(curr.value - level) < Math.abs(prev.value - level) ? curr : prev
+  );
+};
+
 const Skills = () => {
   const { data } = useData();
   const skills = [...data.skills].sort((a, b) => a.order - b.order);
@@ -69,11 +85,17 @@ const Skills = () => {
             </div>
             
             <div className="skills-badges-wrap">
-              {groupedSkills[category].map((skill) => (
-                <span key={skill.id} className="skill-badge">
-                  {skill.name}
-                </span>
-              ))}
+              {groupedSkills[category].map((skill) => {
+                const comp = getCompetency(skill.level);
+                return (
+                  <span key={skill.id} className="skill-badge">
+                    <span className="skill-name">{skill.name}</span>
+                    <span className={`competency-tag ${comp.className}`}>
+                      {comp.label}
+                    </span>
+                  </span>
+                );
+              })}
             </div>
           </motion.div>
         ))}

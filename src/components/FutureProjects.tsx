@@ -3,6 +3,16 @@ import { Rocket } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import './FutureProjects.css';
 
+const getStageClass = (status: string) => {
+  const lower = (status || '').toLowerCase();
+  if (lower.includes('research')) return 'stage-researching';
+  if (lower.includes('plan')) return 'stage-planning';
+  if (lower.includes('build')) return 'stage-building';
+  if (lower.includes('test')) return 'stage-testing';
+  if (lower.includes('launch')) return 'stage-launching';
+  return 'stage-default';
+};
+
 const FutureProjects = () => {
   const { data } = useData();
   const projects = [...data.futureProjects].sort((a, b) => a.order - b.order);
@@ -31,7 +41,9 @@ const FutureProjects = () => {
             </div>
             <h3 className="future-title">{project.title}</h3>
             <p className="future-desc text-secondary">{project.description}</p>
-            <div className="coming-soon-badge">{project.status}</div>
+            <div className={`coming-soon-badge ${getStageClass(project.status)}`}>
+              {project.status}
+            </div>
           </motion.div>
         ))}
       </div>

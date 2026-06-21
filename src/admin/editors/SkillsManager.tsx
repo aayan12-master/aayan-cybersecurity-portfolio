@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
 import { useData, type Skill } from '../../contexts/DataContext';
 import { Plus, Pencil, Trash2, Code2, X, Save, CheckCircle } from 'lucide-react';
+import { COMPETENCY_MAP, getCompetency } from '../../components/Skills';
 import '../admin-shared.css';
 
 const CATEGORIES = ['Foundation', 'Operating Systems', 'Programming', 'Security Tools', 'Practice Platforms', 'Security Domains', 'Tools', 'Other'];
 
-const emptySkill = { name: '', category: 'Security Tools', level: 50 };
+const emptySkill = { name: '', category: 'Security Tools', level: 55 }; // default to Practicing (55)
+
+const COMPETENCY_STYLE: Record<string, React.CSSProperties> = {
+  'Foundation': { backgroundColor: 'rgba(148, 163, 184, 0.1)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.2)' },
+  'Learning': { backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#60a5fa', border: '1px solid rgba(56, 189, 248, 0.2)' },
+  'Practicing': { backgroundColor: 'rgba(129, 140, 248, 0.1)', color: '#818cf8', border: '1px solid rgba(129, 140, 248, 0.2)' },
+  'Hands-On': { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.2)' },
+  'Building': { backgroundColor: 'rgba(236, 72, 153, 0.1)', color: '#f472b6', border: '1px solid rgba(236, 72, 153, 0.2)' },
+  'Active': { backgroundColor: 'rgba(74, 222, 128, 0.1)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.2)' }
+};
 
 const SkillsManager = () => {
   const { data, addSkill, updateSkill, deleteSkill } = useData();
@@ -40,7 +50,7 @@ const SkillsManager = () => {
     <div>
       <div className="admin-page-header">
         <h1>Skills</h1>
-        <p>Manage your skills, categories, and proficiency levels.</p>
+        <p>Manage your skills, categories, and competency levels.</p>
       </div>
 
       <div className="admin-card">
@@ -57,23 +67,25 @@ const SkillsManager = () => {
               {cat}
             </h3>
             <div className="admin-list" style={{ margin: 0 }}>
-              {items.map(skill => (
-                <div key={skill.id} className="admin-list-item">
-                  <div className="list-item-info">
-                    <h3>{skill.name}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.3rem' }}>
-                      <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, maxWidth: 200 }}>
-                        <div style={{ width: `${skill.level}%`, height: '100%', background: '#7c6ff7', borderRadius: 2, transition: 'width 0.3s' }} />
+              {items.map(skill => {
+                const comp = getCompetency(skill.level);
+                return (
+                  <div key={skill.id} className="admin-list-item">
+                    <div className="list-item-info">
+                      <h3>{skill.name}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.3rem' }}>
+                        <span className="badge" style={COMPETENCY_STYLE[comp.label]}>
+                          {comp.label}
+                        </span>
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: '#9090b0' }}>{skill.level}%</span>
+                    </div>
+                    <div className="list-item-actions">
+                      <button className="btn-admin-icon edit" onClick={() => openEdit(skill)} title="Edit"><Pencil size={14} /></button>
+                      <button className="btn-admin-icon danger" onClick={() => deleteSkill(skill.id)} title="Delete"><Trash2 size={14} /></button>
                     </div>
                   </div>
-                  <div className="list-item-actions">
-                    <button className="btn-admin-icon edit" onClick={() => openEdit(skill)} title="Edit"><Pencil size={14} /></button>
-                    <button className="btn-admin-icon danger" onClick={() => deleteSkill(skill.id)} title="Delete"><Trash2 size={14} /></button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
@@ -103,9 +115,20 @@ const SkillsManager = () => {
                 </select>
               </div>
               <div className="form-group">
-                <label>Proficiency Level: <strong style={{ color: '#7c6ff7' }}>{form.level}%</strong></label>
-                <input type="range" min={0} max={100} value={form.level} onChange={e => setForm(f => ({ ...f, level: Number(e.target.value) }))}
-                  style={{ width: '100%', accentColor: '#7c6ff7' }} />
+                <label>Competency Status</label>
+                <select 
+                  value={getCompetency(form.level).label} 
+                  onChange={e => {
+                    const selected = COMPETENCY_MAP.find(c => c.label === e.target.value);
+                    if (selected) {
+                      setForm(f => ({ ...f, level: selected.value }));
+                    }
+                  }}
+                >
+                  {COMPETENCY_MAP.map(c => (
+                    <option key={c.label} value={c.label}>{c.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-admin-secondary" onClick={closeModal}>Cancel</button>
