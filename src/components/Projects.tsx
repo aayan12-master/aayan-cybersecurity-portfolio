@@ -39,8 +39,8 @@ const Projects = () => {
               </div>
 
               <div className="project-link flex items-center gap-sm" style={{ marginTop: '1rem' }}>
-                {project.githubLink && (
-                  <a href={sanitizeUrl(project.githubLink)} target="_blank" rel="noreferrer" className="flex items-center gap-sm" style={{ fontWeight: 600, fontFamily: 'var(--font-heading)', fontSize: '1.1rem' }}>
+                {project.githubUrl && (
+                  <a href={sanitizeUrl(project.githubUrl)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-sm" style={{ fontWeight: 600, fontFamily: 'var(--font-heading)', fontSize: '1.1rem' }}>
                     <FaGithub size={16} aria-hidden="true" /> <span>GitHub</span>
                   </a>
                 )}

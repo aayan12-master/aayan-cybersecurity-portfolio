@@ -51,7 +51,7 @@ export interface Project {
   title: string;
   category: string;
   description: string;
-  githubLink: string;
+  githubUrl: string;
   demoLink: string;
   thumbnail: string;
   order: number;
@@ -195,6 +195,28 @@ const mapCertToDB = (c: Certification) => ({
   order: c.order
 });
 
+const mapProjectFromDB = (p: any): Project => ({
+  id: p.id,
+  title: p.title,
+  category: p.category,
+  description: p.description,
+  githubUrl: (p.github_link === '#' || !p.github_link) ? '' : p.github_link,
+  demoLink: (p.demo_link === '#' || !p.demo_link) ? '' : p.demo_link,
+  thumbnail: p.thumbnail || '',
+  order: p.order
+});
+
+const mapProjectToDB = (p: Project) => ({
+  id: p.id,
+  title: p.title,
+  category: p.category,
+  description: p.description,
+  github_link: (p.githubUrl === '#' || !p.githubUrl) ? '' : p.githubUrl,
+  demo_link: (p.demoLink === '#' || !p.demoLink) ? '' : p.demoLink,
+  thumbnail: p.thumbnail || '',
+  order: p.order
+});
+
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -247,9 +269,9 @@ const DEFAULT_DATA: SiteData = {
     { id: uid(), title: 'Security Awareness', description: 'Educating users and teams on best practices to prevent social engineering.', iconName: 'BookOpen', ctaText: 'Learn More', actionType: 'inquiry', inquirySubject: 'Inquiry: Security Awareness', externalUrl: '', order: 4 },
   ],
   projects: [
-    { id: uid(), title: 'Network Traffic Analyzer', category: 'Python Tool', description: 'A custom packet sniffer built with Scapy to identify suspicious network behaviors.', githubLink: '#', demoLink: '', thumbnail: '', order: 0 },
-    { id: uid(), title: 'Automated Linux Hardening', category: 'Bash Script', description: 'A script that automatically applies CIS benchmarks to secure Ubuntu servers.', githubLink: '#', demoLink: '', thumbnail: '', order: 1 },
-    { id: uid(), title: 'Vulnerability Scanner', category: 'Security Research', description: 'A lightweight scanner integrating multiple open-source tools into a single dashboard.', githubLink: '#', demoLink: '', thumbnail: '', order: 2 },
+    { id: uid(), title: 'Network Traffic Analyzer', category: 'Python Tool', description: 'A custom packet sniffer built with Scapy to identify suspicious network behaviors.', githubUrl: '', demoLink: '', thumbnail: '', order: 0 },
+    { id: uid(), title: 'Automated Linux Hardening', category: 'Bash Script', description: 'A script that automatically applies CIS benchmarks to secure Ubuntu servers.', githubUrl: '', demoLink: '', thumbnail: '', order: 1 },
+    { id: uid(), title: 'Vulnerability Scanner', category: 'Security Research', description: 'A lightweight scanner integrating multiple open-source tools into a single dashboard.', githubUrl: '', demoLink: '', thumbnail: '', order: 2 },
   ],
   certifications: [],
   roadmap: [
@@ -303,8 +325,8 @@ interface DataContextType {
   addService: (service: Omit<Service, 'id' | 'order'>) => void;
   updateService: (id: string, service: Partial<Service>) => void;
   deleteService: (id: string) => void;
-  addProject: (project: Omit<Project, 'id' | 'order'>) => void;
-  updateProject: (id: string, project: Partial<Project>) => void;
+  addProject: (project: Omit<Project, 'id' | 'order'>, onSuccess?: () => void) => void;
+  updateProject: (id: string, project: Partial<Project>, onSuccess?: () => void) => void;
   deleteProject: (id: string) => void;
   addCertification: (cert: Omit<Certification, 'id' | 'order'>) => void;
   updateCertification: (id: string, cert: Partial<Certification>) => void;
@@ -367,11 +389,21 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           migratedSocialLinks = DEFAULT_DATA.socialLinks;
         }
 
+        let sanitizedProjects = DEFAULT_DATA.projects;
+        if (parsed.projects && Array.isArray(parsed.projects)) {
+          sanitizedProjects = parsed.projects.map((p: any) => ({
+            ...p,
+            githubUrl: (p.githubUrl === '#' || !p.githubUrl) ? '' : p.githubUrl,
+            demoLink: (p.demoLink === '#' || !p.demoLink) ? '' : p.demoLink
+          }));
+        }
+
         return {
           ...DEFAULT_DATA,
           ...parsed,
           hero: { ...DEFAULT_DATA.hero, ...parsed.hero },
           about: { ...DEFAULT_DATA.about, ...parsed.about },
+          projects: sanitizedProjects,
           socialLinks: migratedSocialLinks,
           siteSettings: { ...DEFAULT_DATA.siteSettings, ...parsed.siteSettings },
           sectionVisibility: { ...DEFAULT_DATA.sectionVisibility, ...parsed.sectionVisibility },
@@ -418,7 +450,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       }
       if ((!projectsRes.data || projectsRes.data.length === 0) && DEFAULT_DATA.projects.length > 0) {
         console.log('[Supabase Seed] Seeding projects list...');
-        const res = await supabase.from('projects').upsert(DEFAULT_DATA.projects);
+        const res = await supabase.from('projects').upsert(DEFAULT_DATA.projects.map(mapProjectToDB));
         console.log('[Supabase Seed Response] projects:', { status: res.status, error: res.error });
       }
       if ((!certsRes.data || certsRes.data.length === 0) && DEFAULT_DATA.certifications.length > 0) {
@@ -552,7 +584,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const services = servicesRes.data && servicesRes.data.length > 0 
           ? servicesRes.data.map(mapServiceFromDB) 
           : DEFAULT_DATA.services;
-        const projects = projectsRes.data && projectsRes.data.length > 0 ? projectsRes.data : DEFAULT_DATA.projects;
+        const projects = projectsRes.data && projectsRes.data.length > 0 
+          ? projectsRes.data.map(mapProjectFromDB) 
+          : DEFAULT_DATA.projects;
         const certifications = certsRes.data && certsRes.data.length > 0 
           ? certsRes.data.map(mapCertFromDB) 
           : DEFAULT_DATA.certifications;
@@ -717,25 +751,51 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       }
     },
 
-    addProject: async (project) => {
+    addProject: async (project, onSuccess) => {
       const newItem = { ...project, id: uid(), order: data.projects.length };
       update(d => ({ ...d, projects: [...d.projects, newItem] }));
       const tableName = 'projects';
+      // Ensure no null values for NOT NULL columns
+      const dbPayload = {
+        ...mapProjectToDB(newItem),
+        github_link: newItem.githubUrl || '',
+        demo_link: newItem.demoLink || '',
+        thumbnail: newItem.thumbnail || '',
+      };
       try {
-        const res = await supabase.from(tableName).insert(newItem);
-        console.log(`[Supabase Write] Table: ${tableName} (Add)`, { payload: newItem, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+        const res = await supabase.from(tableName).insert(dbPayload);
+        if (res.error) {
+          console.error(`[Supabase Write] ${tableName} (Add) ERROR:`, res.error);
+        } else {
+          console.log(`[Supabase Write] ${tableName} (Add) OK — status ${res.status}`);
+          onSuccess?.();
+        }
       } catch (err: any) {
-        console.error(`[Supabase Exception] Table: ${tableName} (Add)`, err);
+        console.error(`[Supabase Exception] ${tableName} (Add)`, err);
       }
     },
-    updateProject: async (id, project) => {
+    updateProject: async (id, project, onSuccess) => {
       update(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, ...project } : p) }));
       const tableName = 'projects';
+      const mappedUpdate: any = {};
+      if (project.title !== undefined) mappedUpdate.title = project.title;
+      if (project.category !== undefined) mappedUpdate.category = project.category;
+      if (project.description !== undefined) mappedUpdate.description = project.description;
+      // Coerce null/# to '' for NOT NULL columns
+      if (project.githubUrl !== undefined) mappedUpdate.github_link = (project.githubUrl === '#' || !project.githubUrl) ? '' : project.githubUrl;
+      if (project.demoLink !== undefined) mappedUpdate.demo_link = (project.demoLink === '#' || !project.demoLink) ? '' : project.demoLink;
+      if (project.thumbnail !== undefined) mappedUpdate.thumbnail = project.thumbnail || '';
+      if (project.order !== undefined) mappedUpdate.order = project.order;
       try {
-        const res = await supabase.from(tableName).update(project).eq('id', id);
-        console.log(`[Supabase Write] Table: ${tableName} (Update)`, { id, payload: project, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+        const res = await supabase.from(tableName).update(mappedUpdate).eq('id', id);
+        if (res.error) {
+          console.error(`[Supabase Write] ${tableName} (Update) ERROR:`, res.error);
+        } else {
+          console.log(`[Supabase Write] ${tableName} (Update) OK — status ${res.status}`);
+          onSuccess?.();
+        }
       } catch (err: any) {
-        console.error(`[Supabase Exception] Table: ${tableName} (Update)`, err);
+        console.error(`[Supabase Exception] ${tableName} (Update)`, err);
       }
     },
     deleteProject: async (id) => {
@@ -743,9 +803,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       const tableName = 'projects';
       try {
         const res = await supabase.from(tableName).delete().eq('id', id);
-        console.log(`[Supabase Write] Table: ${tableName} (Delete)`, { id, status: res.status, statusText: res.statusText, data: res.data, error: res.error });
+        if (res.error) {
+          console.error(`[Supabase Write] ${tableName} (Delete) ERROR:`, res.error);
+        } else {
+          console.log(`[Supabase Write] ${tableName} (Delete) OK — status ${res.status}`);
+        }
       } catch (err: any) {
-        console.error(`[Supabase Exception] Table: ${tableName} (Delete)`, err);
+        console.error(`[Supabase Exception] ${tableName} (Delete)`, err);
       }
     },
 
