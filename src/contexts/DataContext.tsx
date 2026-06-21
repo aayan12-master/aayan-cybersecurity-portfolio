@@ -23,8 +23,6 @@ export interface HeroContent {
 export interface AboutContent {
   heading: string;
   bio: string;
-  careerGoal: string;
-  missionStatement: string;
 }
 
 export interface Skill {
@@ -224,10 +222,6 @@ const DEFAULT_DATA: SiteData = {
   about: {
     heading: 'About Me',
     bio: 'I am Aayan G. Sayyad, a Cyber Security Student and Cyber Security Enthusiast from Ahmednagar, Maharashtra, India. I completed my Bachelor of Science (B.Sc.) in Computer Science in 2026 from Marutraoji Ghule Patil College.\n\nCurrently, I am pursuing a Cyber Security Training Program at Skill Rise Academy in Hyderabad, where I am building practical knowledge in networking, Linux, security concepts, and hands-on cybersecurity labs.\n\nMy interest in cybersecurity comes from solving security challenges and continuously learning how technology can be secured against modern threats. My long-term vision is to build a cybersecurity company and contribute meaningful solutions to the cybersecurity industry.',
-    careerGoal:
-      'Build strong cybersecurity foundations, gain practical experience, secure a cybersecurity role, and eventually build a cybersecurity company.',
-    missionStatement:
-      'To continuously learn, grow, and contribute meaningful solutions to the cybersecurity industry while helping make digital spaces safer for everyone.',
   },
   skills: [
     { id: uid(), name: 'Networking', category: 'Foundation', level: 60, order: 0 },
@@ -539,7 +533,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 resumeButtonText: row.value.resumeButtonText || 'Download Resume'
               };
             }
-            else if (row.key === 'about') about = row.value;
+            else if (row.key === 'about') {
+              about = {
+                heading: row.value?.heading || DEFAULT_DATA.about.heading,
+                bio: row.value?.bio || DEFAULT_DATA.about.bio
+              };
+            }
             else if (row.key === 'siteSettings') siteSettings = row.value;
             else if (row.key === 'sectionVisibility') sectionVisibility = row.value;
           });

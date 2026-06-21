@@ -21,7 +21,7 @@ const AboutEditor = () => {
     <div>
       <div className="admin-page-header">
         <h1>About Section</h1>
-        <p>Edit your personal bio, career goal, and mission statement.</p>
+        <p>Edit your personal bio.</p>
       </div>
 
       <div className="admin-card">
@@ -42,25 +42,7 @@ const AboutEditor = () => {
             />
           </div>
 
-          <div className="form-group">
-            <label>Career Goal</label>
-            <textarea
-              rows={3}
-              value={form.careerGoal}
-              onChange={e => set('careerGoal', e.target.value)}
-              placeholder="Describe your career goal..."
-            />
-          </div>
 
-          <div className="form-group">
-            <label>Mission Statement</label>
-            <textarea
-              rows={3}
-              value={form.missionStatement}
-              onChange={e => set('missionStatement', e.target.value)}
-              placeholder="Your personal mission..."
-            />
-          </div>
 
           <div className="admin-save-bar">
             {saved && (
