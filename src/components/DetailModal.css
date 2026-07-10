@@ -1,0 +1,175 @@
+.detail-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  animation: detailModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.detail-modal-container {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xl);
+  width: min(760px, 92vw);
+  max-height: 85vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  animation: detailModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Close button positioning inside header */
+.detail-modal-close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 20;
+}
+
+.detail-modal-close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-primary);
+}
+
+.detail-modal-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Scoped Modal Inner Sections */
+.detail-modal-header {
+  padding: 2.25rem 2.5rem 1.25rem 2.5rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.detail-modal-body {
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.detail-modal-footer {
+  padding: 1.25rem 2.5rem 2.25rem 2.5rem;
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background-color: var(--color-bg-content);
+}
+
+/* Layout container overrides for inner view components */
+.project-modal-view,
+.cert-modal-view,
+.future-modal-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Scrollbar styles for the scoped body container */
+.detail-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-modal-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+}
+
+/* Scoped Modal typography & paragraph spacing */
+.detail-modal-body p {
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+.detail-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Animations */
+@keyframes detailModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes detailModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile responsive constraints */
+@media (max-width: 768px) {
+  .detail-modal-container {
+    width: 95vw;
+    max-height: 90vh;
+    border-radius: var(--radius-md);
+  }
+  
+  .detail-modal-close-btn {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .detail-modal-header {
+    padding: 1.5rem 1.25rem 1rem 1.25rem;
+  }
+
+  .detail-modal-body {
+    padding: 1.25rem 1.25rem;
+  }
+
+  .detail-modal-footer {
+    padding: 1rem 1.25rem 1.5rem 1.25rem;
+  }
+}
+
+/* Safe area support for mobile devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 768px) {
+    .detail-modal-footer {
+      padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-modal-overlay,
+  .detail-modal-container {
+    animation: none !important;
+  }
+}
