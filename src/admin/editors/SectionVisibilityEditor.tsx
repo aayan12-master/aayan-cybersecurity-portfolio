@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useData, type SectionVisibility } from '../../contexts/DataContext';
 import { Eye, EyeOff, CheckCircle, Save } from 'lucide-react';
 import '../admin-shared.css';
@@ -21,6 +21,10 @@ const SectionVisibilityEditor = () => {
   const [visibility, setVisibility] = useState<SectionVisibility>({ ...data.sectionVisibility });
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    setVisibility({ ...data.sectionVisibility });
+  }, [data.sectionVisibility]);
+
   const toggle = (key: keyof SectionVisibility) =>
     setVisibility(v => ({ ...v, [key]: !v[key] }));
 
@@ -30,7 +34,7 @@ const SectionVisibilityEditor = () => {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const visibleCount = Object.values(visibility).filter(Boolean).length;
+  const visibleCount = SECTIONS.filter(s => visibility[s.key]).length;
 
   return (
     <div>
@@ -62,10 +66,10 @@ const SectionVisibilityEditor = () => {
               borderRadius: 10, padding: '0.9rem 1.1rem', transition: 'all 0.2s'
             }}>
               <div>
-                <div style={{ fontWeight: 600, fontSize: '0.88rem', color: visibility[section.key] ? '#e8e8f0' : '#55556a' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.88rem', color: visibility[section.key] ? 'var(--a-text)' : 'var(--a-text-muted)' }}>
                   {section.label}
                 </div>
-                <div style={{ fontSize: '0.78rem', color: '#55556a', marginTop: '0.15rem' }}>{section.desc}</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--a-text-sec)', marginTop: '0.15rem' }}>{section.desc}</div>
               </div>
 
               <button

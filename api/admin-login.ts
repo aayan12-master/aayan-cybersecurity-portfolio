@@ -43,15 +43,15 @@ export default async function handler(request: Request) {
     
     // Server-only secrets
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const hashSecret = process.env.RATE_LIMIT_HASH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'fallback_secret';
+    const hashSecret = process.env.RATE_LIMIT_HASH_SECRET;
     const blockMinutes = parseInt(process.env.ADMIN_LOGIN_BLOCK_MINUTES || '15', 10);
     
-    // Public keys available to Vercel build
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+    // Public keys available to Vercel build (or injected by Vercel integrations)
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-      console.error("Missing required Supabase environment variables");
+    if (!supabaseUrl || !anonKey || !serviceRoleKey || !hashSecret) {
+      console.error("Missing required server environment variables");
       return new Response(JSON.stringify({ error: 'Server configuration error' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 

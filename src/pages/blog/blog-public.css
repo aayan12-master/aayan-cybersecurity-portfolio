@@ -556,3 +556,15 @@
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+
+@media (max-width: 768px) {
+  .post-title {
+    font-size: 2.2rem;
+  }
+  .blog-featured-title {
+    font-size: 1.8rem;
+  }
+  .public-blog-subtitle {
+    font-size: 2rem;
+  }
+}

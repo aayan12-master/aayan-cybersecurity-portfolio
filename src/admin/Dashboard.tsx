@@ -75,12 +75,12 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
 
         {/* Quick Actions */}
         <div className="admin-card" style={{ display: 'flex', flexDirection: 'column' }}>
           <h2 style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Quick Actions</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '0.75rem' }}>
             {quickLinks.map(link => (
               <button
                 key={link.to}
