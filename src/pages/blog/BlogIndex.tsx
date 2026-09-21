@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../utils/supabaseClient';
 import { Search, ArrowRight, Calendar } from 'lucide-react';
-import { useData } from '../../contexts/DataContext';
 import './blog-public.css';
 
 interface BlogPost {
@@ -20,7 +19,6 @@ interface BlogPost {
 const CATEGORIES = ['ALL', 'CTF', 'RESEARCH', 'TECHNICAL', 'LIFE'];
 
 const BlogIndex: React.FC = () => {
-  const { data, isInitialized } = useData();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,6 +26,19 @@ const BlogIndex: React.FC = () => {
 
   const fetchPosts = async () => {
     setLoading(true);
+
+    // Fetch blog visibility independently so rendering isn't blocked by full DataContext init
+    const { data: configData } = await supabase
+      .from('portfolio_configs')
+      .select('value')
+      .eq('key', 'sectionVisibility')
+      .single();
+
+    if (configData?.value && configData.value.blog === false) {
+      window.location.href = '/';
+      return;
+    }
+
     const { data, error } = await supabase
       .from('blog_posts')
       .select('id, title, slug, excerpt, cover_image, category, tags, published_at, featured')
@@ -45,17 +56,7 @@ const BlogIndex: React.FC = () => {
     fetchPosts();
   }, []);
 
-  if (!isInitialized) {
-    return (
-      <div className="public-blog-container">
-        <div style={{ textAlign: 'center', padding: '10rem 2rem', opacity: 0.5 }}>Loading...</div>
-      </div>
-    );
-  }
 
-  if (!data.sectionVisibility.blog) {
-    return <Navigate to="/" replace />;
-  }
 
 
 

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../utils/supabaseClient';
 import { ArrowLeft, Clock, Calendar, Share2, ChevronRight, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import ContentRenderer from '../../components/blog/ContentRenderer';
-import { useData } from '../../contexts/DataContext';
 import { Helmet } from 'react-helmet-async';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
@@ -33,7 +32,6 @@ interface TocItem {
 
 const BlogPost: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { data, isInitialized } = useData();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +68,19 @@ const BlogPost: React.FC = () => {
 
   const fetchPostAndRelated = async () => {
     setLoading(true);
+
+    // Fetch blog visibility independently so article rendering isn't blocked by full DataContext init
+    const { data: configData } = await supabase
+      .from('portfolio_configs')
+      .select('value')
+      .eq('key', 'sectionVisibility')
+      .single();
+
+    if (configData?.value && configData.value.blog === false) {
+      window.location.href = '/';
+      return;
+    }
+
     const { data: postData, error } = await supabase
       .from('blog_posts')
       .select('*')
@@ -171,17 +182,7 @@ const BlogPost: React.FC = () => {
     return () => observer.disconnect();
   }, [toc, post]);
 
-  if (!isInitialized) {
-    return (
-      <div className="public-blog-container">
-        <div style={{ textAlign: 'center', padding: '10rem 2rem', opacity: 0.5 }}>Loading...</div>
-      </div>
-    );
-  }
 
-  if (!data.sectionVisibility.blog) {
-    return <Navigate to="/" replace />;
-  }
 
   const calculateReadingTime = (text: string) => {
     const words = text.trim().split(/\s+/).length;
