@@ -27,25 +27,28 @@ const BlogIndex: React.FC = () => {
   const fetchPosts = async () => {
     setLoading(true);
 
-    // Fetch blog visibility independently so rendering isn't blocked by full DataContext init
-    const { data: configData } = await supabase
-      .from('portfolio_configs')
-      .select('value')
-      .eq('key', 'sectionVisibility')
-      .single();
+    // Parallelize blog visibility and post fetching so rendering isn't blocked by serial requests
+    const [configRes, postsRes] = await Promise.all([
+      supabase
+        .from('portfolio_configs')
+        .select('value')
+        .eq('key', 'sectionVisibility')
+        .single(),
+      supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, cover_image, category, tags, published_at, featured')
+        .eq('status', 'published')
+        .lte('published_at', new Date().toISOString())
+        .order('published_at', { ascending: false })
+    ]);
 
+    const configData = configRes.data;
     if (configData?.value && configData.value.blog === false) {
       window.location.href = '/';
       return;
     }
 
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('id, title, slug, excerpt, cover_image, category, tags, published_at, featured')
-      .eq('status', 'published')
-      .lte('published_at', new Date().toISOString())
-      .order('published_at', { ascending: false });
-
+    const { data, error } = postsRes;
     if (!error && data) {
       setPosts(data as BlogPost[]);
     }

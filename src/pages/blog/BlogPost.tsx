@@ -69,30 +69,36 @@ const BlogPost: React.FC = () => {
   const fetchPostAndRelated = async () => {
     setLoading(true);
 
-    // Fetch blog visibility independently so article rendering isn't blocked by full DataContext init
-    const { data: configData } = await supabase
-      .from('portfolio_configs')
-      .select('value')
-      .eq('key', 'sectionVisibility')
-      .single();
+    // Parallelize visibility check and main article fetch to prevent serial blocking
+    const [configRes, postRes] = await Promise.all([
+      supabase
+        .from('portfolio_configs')
+        .select('value')
+        .eq('key', 'sectionVisibility')
+        .single(),
+      supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('slug', slug)
+        .eq('status', 'published')
+        .lte('published_at', new Date().toISOString())
+        .single()
+    ]);
 
+    const configData = configRes.data;
     if (configData?.value && configData.value.blog === false) {
       window.location.href = '/';
       return;
     }
 
-    const { data: postData, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .eq('status', 'published')
-      .lte('published_at', new Date().toISOString())
-      .single();
+    const postData = postRes.data;
+    const error = postRes.error;
 
     if (!error && postData) {
       setPost(postData as BlogPost);
+      setLoading(false); // Unblock main article rendering immediately
       
-      // Extract TOC using unified and remark-parse
+      // Extract TOC using unified and remark-parse (synchronous and fast)
       const tocItems: TocItem[] = [];
       const slugger = new Slugger();
       const processor = unified().use(remarkParse);
@@ -112,21 +118,27 @@ const BlogPost: React.FC = () => {
       
       setToc(tocItems);
 
-      // Fetch related posts (same category, excluding current)
+      // Fetch related posts non-blockingly
       if (postData.category) {
-        const { data: relatedData } = await supabase
-          .from('blog_posts')
-          .select('id, title, slug, excerpt, cover_image, category, tags, published_at')
-          .eq('status', 'published')
-          .eq('category', postData.category)
-          .neq('id', postData.id)
-          .lte('published_at', new Date().toISOString())
-          .limit(3);
-        
-        if (relatedData) setRelatedPosts(relatedData as BlogPost[]);
+        (async () => {
+          try {
+            const { data: relatedData } = await supabase
+              .from('blog_posts')
+              .select('id, title, slug, excerpt, cover_image, category, tags, published_at')
+              .eq('status', 'published')
+              .eq('category', postData.category)
+              .neq('id', postData.id)
+              .lte('published_at', new Date().toISOString())
+              .limit(3);
+            if (relatedData) setRelatedPosts(relatedData as BlogPost[]);
+          } catch (err) {
+            console.error('Error fetching related posts:', err);
+          }
+        })();
       }
+    } else {
+      setLoading(false); // Unblock so the Not Found state can render
     }
-    setLoading(false);
   };
 
   useEffect(() => {
