@@ -1,0 +1,429 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import './admin-shared.css';
+
+/* ─── Shell ──────────────────────────────────────────────────────────────── */
+
+.admin-shell {
+  min-height: 100vh;
+  background: var(--ab);
+  font-family: 'Inter', sans-serif;
+  color: var(--a-text);
+}
+
+.admin-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  margin-left: 260px;
+  transition: margin-left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.admin-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--a-sidebar);
+  border-right: 1px solid var(--a-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), min-width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 100;
+}
+
+.admin-shell.sidebar-collapsed .admin-sidebar {
+  width: 72px;
+  min-width: 72px;
+}
+
+.admin-shell.sidebar-collapsed .admin-content-wrapper {
+  margin-left: 72px;
+}
+
+/* Scrollbars */
+.admin-sidebar::-webkit-scrollbar,
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-sidebar::-webkit-scrollbar-track,
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-sidebar::-webkit-scrollbar-thumb,
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--a-border);
+  border-radius: 4px;
+}
+.admin-sidebar:hover::-webkit-scrollbar-thumb,
+.sidebar-nav:hover::-webkit-scrollbar-thumb {
+  background: var(--a-text-muted);
+}
+
+/* ─── Sidebar Header ─────────────────────────────────────────────────────── */
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1.25rem 1.25rem;
+  min-height: 72px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--a-text);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--a-accent), #9d8df7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--a-accent-glow);
+}
+
+
+
+/* ─── Nav ─────────────────────────────────────────────────────────────────── */
+
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.nav-group-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--a-text-muted);
+  padding: 0 0.75rem 0.5rem;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.admin-shell.sidebar-collapsed .nav-group-label {
+  opacity: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--a-radius-sm);
+  color: var(--a-text-sec);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: var(--a-input-bg);
+  color: var(--a-text);
+}
+
+.nav-item.active {
+  background: var(--a-accent-glow);
+  color: var(--a-accent);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background: var(--a-accent);
+  border-radius: 0 4px 4px 0;
+}
+
+.nav-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+.nav-text {
+  transition: opacity 0.2s, width 0.2s;
+}
+
+.admin-shell.sidebar-collapsed .sidebar-nav {
+  padding: 1rem 0.5rem;
+}
+
+.admin-shell.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.admin-shell.sidebar-collapsed .nav-item::before {
+  left: 2px;
+}
+
+.admin-shell.sidebar-collapsed .nav-text {
+  opacity: 0;
+  width: 0;
+  display: none;
+}
+
+
+/* ─── Top Header ─────────────────────────────────────────────────────────── */
+
+.admin-top-header {
+  height: 72px;
+  min-height: 72px;
+  background: var(--ab);
+  border-bottom: 1px solid var(--a-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  backdrop-filter: blur(10px);
+  background: var(--a-header-bg);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.sidebar-toggle {
+  background: var(--a-input-bg);
+  border: 1px solid var(--a-border);
+  color: var(--a-text-sec);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sidebar-toggle:hover {
+  background: var(--a-border);
+  color: var(--a-text);
+}
+
+.mobile-toggle {
+  display: none;
+}
+
+.header-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.breadcrumb-path {
+  color: var(--a-text-muted);
+}
+
+.breadcrumb-separator {
+  color: var(--a-text-muted);
+  font-size: 0.8rem;
+}
+
+.breadcrumb-current {
+  color: var(--a-text);
+  font-weight: 500;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--a-text-sec);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.header-icon-btn:hover {
+  background: var(--a-input-bg);
+  color: var(--a-text);
+}
+
+.header-icon-btn.text-danger:hover {
+  color: var(--a-danger);
+  background: rgba(248, 113, 113, 0.1); /* This is fine as a generic red tint */
+}
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--a-border);
+}
+
+.admin-user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--a-radius-sm);
+  transition: background 0.2s;
+}
+
+.admin-user-menu:hover {
+  background: var(--a-input-bg);
+}
+
+.admin-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.admin-user-name {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--a-text);
+}
+
+.admin-user-role {
+  font-size: 0.7rem;
+  color: var(--a-text-muted);
+}
+
+.admin-avatar {
+  width: 36px;
+  height: 36px;
+  background: rgba(124, 92, 255, 0.15);
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  color: var(--a-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ─── Main Content ────────────────────────────────────────────────────────── */
+
+.admin-main {
+  padding: 2.5rem;
+  padding-bottom: var(--admin-content-bottom-space, 4rem);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    width: 240px;
+    min-width: 240px;
+  }
+  .admin-content-wrapper {
+    margin-left: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-toggle {
+    display: none;
+  }
+  
+  .mobile-toggle {
+    display: flex;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 200;
+    transform: translateX(-100%);
+    width: 260px !important;
+  }
+
+  .admin-shell.mobile-sidebar-open .admin-sidebar {
+    transform: translateX(0);
+  }
+  
+  .admin-content-wrapper,
+  .admin-shell.sidebar-collapsed .admin-content-wrapper {
+    margin-left: 0;
+  }
+
+  .admin-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(2px);
+    z-index: 199;
+  }
+  
+  .admin-main {
+    padding: 1.5rem;
+  }
+  
+  .admin-top-header {
+    padding: 0 1.25rem;
+  }
+  
+  .admin-user-info {
+    display: none;
+  }
+}

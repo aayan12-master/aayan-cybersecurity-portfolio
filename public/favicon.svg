@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Transparent background container -->
+  <rect width="512" height="512" fill="none" />
+
+  <defs>
+    <!-- Symmetrical Quadrant Maze Segment (0 to 90 degrees) -->
+    <!-- R1 = 220, R2 = 180, R3 = 140, Stroke Width = 12 -->
+    <!-- Starts at 4 deg, ends at 86 deg to leave a clean 8 deg gap between segments -->
+    <path id="maze-segment" d="M 475.5 240.6 
+                             A 220 220 0 0 0 271.4 36.5 
+                             L 268.6 76.4 
+                             A 180 180 0 0 1 432.0 218.6 
+                             L 392.9 226.9 
+                             A 140 140 0 0 0 265.8 116.3 
+                             L 263.0 156.2" />
+  </defs>
+
+  <!-- Symmetrical Circular Maze Emblem (Gold/Orange) -->
+  <g stroke="#f59e0b" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#maze-segment" />
+    <use href="#maze-segment" transform="rotate(90 256 256)" />
+    <use href="#maze-segment" transform="rotate(180 256 256)" />
+    <use href="#maze-segment" transform="rotate(270 256 256)" />
+  </g>
+
+  <!-- The Cyber Ghost (Black, centered, mysterious) -->
+  <!-- Sleek organic shape with wings and a tail, matching reference image silhouette -->
+  <path d="M 256 140 
+           C 220 140, 190 170, 175 200 
+           C 160 215, 135 220, 110 225
+           C 90 230, 85 245, 95 260
+           C 115 285, 140 310, 170 315
+           C 185 300, 190 275, 195 255
+           C 200 275, 205 295, 215 315
+           C 220 330, 230 355, 245 375
+           C 255 390, 275 410, 290 415
+           C 295 416, 298 410, 295 400
+           C 285 370, 270 330, 272 290
+           C 285 305, 305 315, 325 310
+           C 345 305, 385 280, 395 250
+           C 400 235, 385 220, 365 215
+           C 340 210, 320 205, 305 195
+           C 290 170, 280 140, 256 140 Z" 
+        fill="#111118" />
+
+  <!-- Eyes: sharp triangles cut out of the ghost, colored gold/orange to stand out -->
+  <!-- Left Eye -->
+  <polygon points="220,185 245,190 230,200" fill="#f59e0b" />
+  <!-- Right Eye -->
+  <polygon points="292,185 267,190 282,200" fill="#f59e0b" />
+</svg>
