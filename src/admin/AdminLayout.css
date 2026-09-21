@@ -427,3 +427,15 @@
     display: none;
   }
 }
+
+@media (max-width: 480px) {
+  .admin-main {
+    padding: 1rem;
+  }
+  .admin-top-header {
+    padding: 0 1rem;
+  }
+  .admin-page-header h1 {
+    font-size: 1.35rem;
+  }
+}

@@ -227,10 +227,20 @@
     padding-top: 2vh;
     padding-left: 12px;
     padding-right: 12px;
+    /* Use dynamic viewport height to handle mobile browser chrome */
+    height: 100dvh;
   }
   .admin-global-search-modal {
     width: 100%;
     max-width: none;
+    /* Ensure modal doesn't exceed viewport */
+    max-height: 80dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .admin-global-search-input {
+    /* Must be >= 16px to prevent iOS auto-zoom */
+    font-size: 16px;
   }
   .admin-global-search-item-desc {
     max-width: 240px;

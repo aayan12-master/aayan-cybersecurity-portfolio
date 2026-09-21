@@ -13,12 +13,25 @@
 .future-card-static {
   flex: 1 1 calc(33.333% - var(--spacing-md));
   min-width: 250px;
+  max-width: 100%;
   background-color: var(--color-white);
   border: 1px dashed var(--color-accent);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   position: relative;
   transition: transform 0.3s ease;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .future-grid {
+    flex-direction: column;
+  }
+  .future-card-static {
+    flex: 1 1 100%;
+    min-width: unset;
+    padding: var(--spacing-md);
+  }
 }
 
 .future-card-static:hover {

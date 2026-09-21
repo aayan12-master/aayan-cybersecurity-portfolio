@@ -242,4 +242,7 @@
     .contact-grid {
         grid-template-columns: 1fr;
     }
+    .contact-form-wrapper {
+        padding: var(--spacing-md);
+    }
 }

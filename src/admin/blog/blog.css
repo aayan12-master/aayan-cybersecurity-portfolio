@@ -40,7 +40,7 @@
   gap: 8px;
   width: 100%;
   max-width: 400px;
-  min-width: 320px;
+  min-width: min(320px, 100%);
   height: 42px;
   transition: all 0.2s ease;
 }
@@ -623,7 +623,24 @@ textarea.blog-meta-input {
 @media (max-width: 768px) {
   .blog-top-nav { flex-direction: column; height: auto; padding: 1rem 0; gap: 1rem; align-items: stretch; }
   .blog-nav-left { flex-direction: column; align-items: stretch; gap: 1rem; }
-  .blog-search-bar { max-width: 100%; width: 100%; }
+  .blog-search-bar { max-width: 100%; width: 100%; min-width: unset; }
   .blog-content { flex-direction: column; }
   .blog-sidebar { width: 100%; }
+  
+  /* Fix blog editor sidebar: stack below editor instead of absolute overlay */
+  .blog-editor-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-top: 1px solid var(--a-border);
+    border-left: none;
+    box-shadow: none;
+  }
+  
+  /* Blog Manager table rows - stack badges */
+  .blog-article-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
 }

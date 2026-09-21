@@ -754,18 +754,36 @@ ul[data-type="taskList"] li > div {
   }
   .notes-filter-btn {
     padding: 0.5rem;
+    white-space: nowrap;
   }
   .notes-top-bar {
     padding: 1rem;
     flex-direction: column;
     gap: 1rem;
   }
+  .notes-search-wrapper {
+    max-width: 100%;
+  }
   .notes-board {
     padding: 1rem;
+    grid-template-columns: 1fr;
   }
   
   .note-workspace-toolbar {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
+    /* Make toolbar scrollable horizontally on mobile without overflow */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    gap: 0.25rem;
+  }
+  .note-workspace-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+  .note-editor-actions {
+    flex-shrink: 0;
   }
   .note-document {
     padding: 2rem 1.25rem 10rem 1.25rem;
@@ -783,5 +801,28 @@ ul[data-type="taskList"] li > div {
     padding: 0.75rem 1.5rem;
     border-top: 1px solid var(--a-border);
     justify-content: flex-end;
+  }
+  
+  .note-slash-menu {
+    width: min(300px, 90vw);
+  }
+  
+  /* Move selection toolbar to not overflow */
+  .note-selection-toolbar {
+    max-width: 90vw;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .note-title-input {
+    font-size: 1.7rem;
+  }
+  .notes-board {
+    padding: 0.75rem;
+  }
+  .note-workspace-toolbar {
+    padding: 0.75rem;
   }
 }

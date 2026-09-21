@@ -58,6 +58,16 @@ body {
   flex-direction: column;
 }
 
+@media (max-width: 768px) {
+  body {
+    padding: var(--spacing-xs);
+  }
+  #root {
+    min-height: calc(100vh - 2 * var(--spacing-xs));
+    border-radius: var(--radius-md);
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   color: var(--color-text-primary);
@@ -92,8 +102,20 @@ button {
   padding: 0 var(--spacing-md);
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+}
+
 .section {
   padding: var(--spacing-xl) 0;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: var(--spacing-lg) 0;
+  }
 }
 
 .flex { display: flex; }

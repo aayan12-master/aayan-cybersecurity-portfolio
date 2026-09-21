@@ -8,7 +8,7 @@
 
 .skills-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: var(--spacing-md);
   width: 100%;
   margin-top: var(--spacing-md);
@@ -137,5 +137,8 @@
 @media (max-width: 768px) {
   .skills-grid {
     grid-template-columns: 1fr;
+  }
+  .skills-category-card {
+    padding: var(--spacing-md);
   }
 }

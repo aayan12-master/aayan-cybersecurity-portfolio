@@ -171,7 +171,11 @@
 }
 
 .content-renderer table {
+  /* Tables must scroll internally, not overflow the page */
+  display: block;
   width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-collapse: collapse;
   margin-bottom: 1.5rem;
 }
@@ -197,4 +201,22 @@
   border-radius: 4px;
   font-size: 0.85em;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Mobile typography adjustments for article content */
+@media (max-width: 768px) {
+  .content-renderer {
+    font-size: 1rem;
+  }
+  .content-renderer h1 { font-size: 1.7rem; }
+  .content-renderer h2 { font-size: 1.35rem; }
+  .content-renderer h3 { font-size: 1.15rem; }
+}
+
+@media (max-width: 480px) {
+  .content-renderer h1 { font-size: 1.5rem; }
+  .content-renderer h2 { font-size: 1.2rem; }
+  .content-renderer h3 { font-size: 1.1rem; }
 }

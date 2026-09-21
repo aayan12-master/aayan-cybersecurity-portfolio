@@ -217,3 +217,18 @@
 .back-link:hover {
   color: var(--a-accent);
 }
+
+@media (max-width: 480px) {
+  .admin-login-page {
+    padding: 1rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+  .login-card {
+    padding: 1.75rem 1.5rem;
+  }
+  /* >= 16px prevents iOS Safari from auto-zooming on input focus */
+  .login-form .input-wrapper input {
+    font-size: 16px;
+  }
+}

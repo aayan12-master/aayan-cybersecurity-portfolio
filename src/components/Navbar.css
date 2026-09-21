@@ -16,6 +16,12 @@
   white-space: nowrap; /* Prevent logo wrapping */
 }
 
+@media (max-width: 480px) {
+  .navbar-logo {
+    font-size: 1.25rem;
+  }
+}
+
 .navbar-links {
   display: flex;
   gap: var(--spacing-md);
@@ -42,7 +48,9 @@
   border: none;
   color: var(--color-text-primary);
   cursor: pointer;
-  padding: 4px;
+  padding: 8px; /* Increased for touch target */
+  min-width: 44px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   outline: none;
@@ -69,11 +77,19 @@
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-border);
     padding: var(--spacing-md) 0;
-    gap: 1.25rem;
-    align-items: center;
+    gap: 0.5rem; /* Reduced gap, added padding to links for touch targets */
+    align-items: stretch; /* Stretch links full width for easy tapping */
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
     animation: slideDown 0.2s ease-out forwards;
     z-index: 99;
+  }
+
+  .navbar-links.mobile-open a {
+    padding: 12px var(--spacing-md);
+    text-align: center;
+    font-size: 1.1rem; /* Slightly larger text on mobile menu */
+    display: block;
+    width: 100%;
   }
 
   @keyframes slideDown {
